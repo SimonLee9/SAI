@@ -6,8 +6,9 @@ S.A.I (Spatial Acoustic Intelligence, "사이") — 3D 프린팅 기반 모듈�
 
 - `firmware/` — ESP32-S3 펌웨어 (C++/PlatformIO). `master/`, `satellite/`, 공유 라이브러리는 `shared/lib/`.
 - `dsp-tools/` — 오디오 분석·보정 (Python 3.10+). `analysis/`, `calibration/`, `neural/`.
-- `web-landing/` — 브랜드/제품 랜딩 페이지 (Vite + React + TS + Tailwind v4). 이메일 사전 알림 수집과 Web Audio 기반 **Sound Lab** 데모 포함. **Phase 0에서 활성**.
+- `web-landing/` — 브랜드/제품 랜딩 페이지 (Vite + React + TS + Tailwind v4). Sound Lab 데모와 사전 알림 폼. **Phase 0에서 활성**.
 - `web-dashboard/` — 제품 제어 UI (계획 단계, **Phase 3** — 마스터 펌웨어 WebSocket 서버 후 부트스트랩).
+- `services/` — 백엔드 서비스. 현재 `waitlist/` (Cloudflare Worker + KV).
 - `hardware/` — `enclosure/` (STL/STEP), `pcb/`, `bom/`.
 - `docs/` — `business/`, `technical/` (설계 문서: `docs/technical/DESIGN.md`), `brand/`.
 - `content/` — 블로그·유튜브 원고.
@@ -20,6 +21,7 @@ S.A.I (Spatial Acoustic Intelligence, "사이") — 3D 프린팅 기반 모듈�
 | `firmware/master` (또는 `satellite`) | (PlatformIO 자동 의존성 설치) | `pio run -t upload && pio device monitor` |
 | `dsp-tools` | `pip install -r requirements.txt` | `python analysis/sweep_generator.py --duration 5` |
 | `web-landing` | `npm install` | `npm run dev` (→ http://localhost:5174) |
+| `services/waitlist` | `npm install` | `npm run dev` (wrangler → http://localhost:8787) · `npm run deploy` |
 | `web-dashboard` | (Phase 3에 부트스트랩) | — |
 
 `firmware/shared/lib/`는 PlatformIO 라이브러리 storage이며, 각 모듈은 자체 서브디렉토리를 가진다 (`sai_config/`, `sai_led/`, `sai_audio/`, `sai_bt/`). 두 펌웨어 환경에 `lib_extra_dirs = ../shared/lib`이 설정되어 있어, `#include "sai_config.h"`처럼 헤더 이름만으로 include 가능. 새 모듈 추가 시 같은 패턴으로 디렉토리만 만들면 된다 (별도 매니페스트 불필요).
@@ -37,6 +39,12 @@ S.A.I (Spatial Acoustic Intelligence, "사이") — 3D 프린팅 기반 모듈�
 
 **Phase 0 — 레포·브랜드 셋업** (in progress, 2026-05-02 기준).
 전체 로드맵은 [README.md](README.md), 기술 세부는 [docs/technical/DESIGN.md](docs/technical/DESIGN.md).
+
+## Deployment topology (Phase 0)
+
+- **web-landing** → Cloudflare Pages. Build command `npm run build`, output `dist/`. SPA, 모든 route를 `/index.html`로 fallback (필요 시 `public/_redirects` 추가).
+- **services/waitlist** → Cloudflare Workers + KV namespace `WAITLIST_KV`. CORS는 `wrangler.toml`의 `ALLOWED_ORIGIN`으로 landing origin에 락. 첫 배포 절차는 [services/waitlist/README.md](services/waitlist/README.md).
+- 두 surface 사이 결합은 `web-landing/.env`의 `VITE_WAITLIST_ENDPOINT`만으로 — endpoint 미설정 시 `Waitlist.tsx`는 자동으로 localStorage 폴백.
 
 ## Working with Claude Code on this repo
 

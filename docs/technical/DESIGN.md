@@ -113,8 +113,17 @@ Phase 1 모듈 셋은 모두 구현 완료. 마스터 노드의 데이터 플로
 - **타이포**: Pretendard Variable (jsDelivr CDN), 한국어 본문/제목.
 - **섹션**: Header / Hero / Features / Showcase / SoundLab / Waitlist / About / FAQ / Footer.
 - **핵심 기능 — Sound Lab**: Web Audio API로 6개 프리셋(50 Hz / 100 Hz / 1 kHz / 10 kHz / 20 Hz→20 kHz 로그 스윕 / Voss-Kellet 핑크 노이즈)을 클라이언트에서 합성. `AnalyserNode` (fftSize=256)를 16 막대로 로그 스케일 그룹화하여, 실제 WS2812B 링의 시각화를 그대로 미러링. 출력은 `GainNode`로 `VOL_MAX = 0.5` 하드 캡 (청력 안전).
-- **사전 알림**: 이메일을 `localStorage`에만 보관 (`sai.waitlist.v1`). 백엔드는 사전 출시 단계에서 연결.
+- **사전 알림**: `VITE_WAITLIST_ENDPOINT`가 설정되어 있으면 `services/waitlist` Worker로 POST. 미설정/네트워크 실패 시 `localStorage`로 폴백 (리드 손실 방지). UI 메시지로 두 경로를 구분 안내.
+- **배포**: Cloudflare Pages — `npm run build` → `dist/`, `public/_headers`가 자동 ship되어 immutable assets와 보안 헤더(X-Content-Type-Options, Referrer-Policy, Permissions-Policy 등) 적용.
 - **자세한 사항**: [web-landing/README.md](../../web-landing/README.md).
+
+### 5.1b `services/waitlist/` — 사전 알림 백엔드
+
+- **스택**: Cloudflare Workers (TypeScript) + KV.
+- **API**: 단일 `POST /` 엔드포인트, `{ email }` 검증→KV에 `email:<lowercased>` 키로 `{ email, createdAt, ip, ua }` 저장. 중복은 200 + `duplicate: true`로 반환 (etcetera로 가입 여부 누설 방지).
+- **CORS**: `ALLOWED_ORIGIN` 변수로 landing origin에만 허용.
+- **운영**: `wrangler kv key list/get`로 조회·내보내기. 필요 시 Turnstile + Durable Object 카운터로 rate limiting 추가.
+- **자세한 사항**: [services/waitlist/README.md](../../services/waitlist/README.md).
 
 ### 5.2 `web-dashboard/` — 제품 제어 UI (Phase 3)
 

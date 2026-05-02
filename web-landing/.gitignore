@@ -3,6 +3,8 @@ dist
 dist-ssr
 *.local
 .vite
+.env.local
+.env.*.local
 
 # TypeScript incremental build cache
 *.tsbuildinfo

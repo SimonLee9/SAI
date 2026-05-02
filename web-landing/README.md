@@ -72,12 +72,46 @@ web-landing/
 - 비주얼라이저: `AnalyserNode.fftSize = 256` → 128 bin을 **로그 스케일**로 16개 막대에 그룹화. 색상은 저역 단청 amber → 고역 청자 sage 그라데이션 (LED 링 매핑 컨셉 미러).
 - 미재생 상태에서도 캔버스가 idle 사인파를 그려 "살아 있는" 인상을 유지.
 
+## Backend wiring (사전 알림)
+
+`Waitlist.tsx`는 `import.meta.env.VITE_WAITLIST_ENDPOINT`가 설정돼 있으면 그 URL로 `POST { email }`을 전송합니다. 미설정이거나 네트워크가 실패하면 자동으로 `localStorage`에 폴백 저장하고 UI에 그 사실을 표시합니다 — 어느 경우에도 리드는 잃지 않음.
+
+```bash
+cp .env.example .env.local
+# .env.local 편집:
+#   VITE_WAITLIST_ENDPOINT=http://localhost:8787   # 로컬 worker
+# 혹은
+#   VITE_WAITLIST_ENDPOINT=https://sai-waitlist.<account>.workers.dev
+```
+
+Worker 셋업 절차는 [services/waitlist/README.md](../services/waitlist/README.md).
+
+## Deploy (Cloudflare Pages)
+
+GitHub 연동을 권장:
+
+| 설정 | 값 |
+|---|---|
+| Build command   | `npm run build` |
+| Build output    | `dist` |
+| Root directory  | `web-landing` |
+| Env var (Production) | `VITE_WAITLIST_ENDPOINT` = 운영 worker URL |
+
+`public/_headers`는 자동으로 `dist/_headers`로 복사되어 edge에서 적용됩니다 (immutable asset 캐시 + 보안 헤더).
+
+CLI로:
+
+```bash
+npm run build
+npx wrangler pages deploy dist --project-name sai-landing
+```
+
 ## Known limits (Phase 0)
 
-- 사전 알림 이메일은 **localStorage에만 저장**. 백엔드 연동은 별도 작업.
 - Hero·Showcase 비주얼은 CSS 합성 (실제 제품 사진은 Phase 1 후반에 교체).
 - 다국어 미지원: 한국어 우선, 영문은 기술 라벨에만.
 - 다크 모드 미지원.
+- Pretendard CDN 의존 — 첫 페인트가 CDN 응답에 묶임. 추후 self-host로 전환 검토.
 
 ## License
 
