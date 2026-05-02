@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import BrushStroke from "./BrushStroke";
+import TraditionalBand from "./TraditionalBand";
 
 type NavItem = { to: string; label: string; end?: boolean };
 
@@ -27,6 +28,12 @@ export default function Sidebar() {
       style={{ height: "calc(100vh - 4rem)" }}
     >
       <nav className="px-5 py-8 font-mono text-sm overflow-y-auto h-full">
+        {/* 회문 trim above the brand cap — frames the sidebar as a contained
+            chrome surface. Narrow width matches the sidebar's content scale. */}
+        <TraditionalBand
+          idSuffix="sb-top"
+          className="block w-16 h-[3px] mb-3 text-ink-soft/35"
+        />
         <p className="text-xs tracking-[0.3em] text-ink-soft uppercase">사이</p>
         <BrushStroke quality="najeon" idSuffix="sb" className="mt-1 block w-8 h-[5px]" />
 

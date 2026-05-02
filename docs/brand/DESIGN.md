@@ -99,11 +99,15 @@ CSS 변수로 정의되며, `:root` (라이트)와 `:root.dark` (다크)에서 �
 
 현재 구현된 패턴: **회문 (回紋, Korean meander)** — 직각 톱니가 가로로 반복되는 단순화 fret. Goryeo 시대 나전칠기 테두리 무늬와 같은 계열이라 자개와 짝을 이룸.
 
-**사용 규칙**:
-- 페이지당 **1–2곳**만. 모든 surface 경계마다 두르면 trim의 의미가 사라진다.
-- 색은 `currentColor` (mode 따라 자동 swap)
-- opacity는 25–40% — 보조 장식이지 주인공이 아님
-- 컨텐츠 안쪽이 아닌 **surface 경계** (Footer 상단, Header 하단 등)에만
+**사용 규칙 — prominent + secondary 위계**:
+
+- **Prominent trim (페이지당 1곳)** — Footer 상단. 가장 두껍고 가장 진한 trim (h-1.5, opacity ~35%). 페이지의 마무리 acoustic mark.
+- **Secondary trim (layout chrome)** — Header 하단, Sidebar 상단, Hero 컨텐츠 시작점. 더 얇고 더 옅게 (h-[3px], opacity ~35%, color 자체가 더 옅은 `ink-soft/35` 같은 토큰). 페이지 chrome을 부드럽게 가르되 prominent를 능가하지 않음.
+- **컨텐츠 안쪽엔 두지 않는다** — section 카드 사이, 본문 단락 구분 등엔 무늬를 쓰지 않는다 (BrushStroke / 농담 layer가 그 자리).
+- 색은 항상 `currentColor` (mode 따라 자동 swap)
+- 새 패턴 변형(wave, lattice 등) 추가 시 같은 위계 규칙 따른다.
+
+이 위계 덕분에 한 페이지에 chrome trim이 3–4개 (Header·Sidebar·Hero·Footer) 등장해도 시선은 Footer의 prominent trim에 anchor되고, 나머지는 부드러운 chrome 경계로 인식된다.
 
 ---
 
@@ -193,7 +197,13 @@ CSS 변수로 정의되며, `:root` (라이트)와 `:root.dark` (다크)에서 �
 - `idSuffix` — 페이지 내 고유 문자열 (SVG pattern id 충돌 방지)
 - `className` — 보통 `block w-full h-1.5 text-paper/35` 류로 높이·색·투명도 제어
 
-**현재 위치**: Footer 상단 (한복 끝단 모티프). 다른 자리 추가 전 §2.6 사용 규칙 참고.
+**현재 위치**:
+- Footer 상단 — prominent (h-1.5, `text-paper/35` on bg-ink)
+- Header 하단 — secondary (h-[3px], `text-ink-soft/35`, replaces flat border)
+- Sidebar 상단 — secondary (h-[3px] w-16, `text-ink-soft/35`, 사이 라벨 위)
+- Hero 컨텐츠 시작 — secondary (h-[3px] w-20, `text-ink-soft/35`, "Spatial Acoustic Intelligence" 라벨 위)
+
+다른 자리 추가 전 §2.6 위계 규칙 참고. content 안쪽엔 두지 않는다.
 
 ---
 
@@ -276,7 +286,7 @@ focus 상태도 인주 사용 안 함 — ink 농묵으로 충분.
 3. ✅ 인주 사용처는 §2.3의 4곳 외에는 추가 안 한다.
 4. ✅ 다크 모드에서 figure-ground가 의도대로 inversion 되는지 토글로 확인한다.
 5. ✅ 새 섹션의 태그 라벨에는 `<BrushStroke quality="najeon" idSuffix="..." />` underline을 동봉한다 — `idSuffix`는 페이지 내 고유 문자열로.
-6. ✅ `<TraditionalBand />`는 페이지당 1–2곳만, surface 경계에서만 사용 (§2.6).
+6. ✅ `<TraditionalBand />`는 prominent 1곳 + secondary chrome trim 1–3곳 (§2.6 위계). content 안쪽엔 두지 않는다.
 7. ✅ `prefers-reduced-motion` 사용자에게 큰 애니메이션을 강요하지 않는다.
 8. ✅ 한국어 본문은 차분한 voice를 유지 (느낌표·이모지 남용 금지).
 

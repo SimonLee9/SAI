@@ -1,5 +1,6 @@
 import { brand } from "../data/content";
 import BrushStroke from "./BrushStroke";
+import TraditionalBand from "./TraditionalBand";
 
 export default function Hero() {
   return (
@@ -22,6 +23,13 @@ export default function Hero() {
 
       <div className="mx-auto max-w-6xl px-6 pt-24 pb-28 md:pt-32 md:pb-36 grid md:grid-cols-12 gap-10 items-center">
         <div className="md:col-span-7">
+          {/* 회문 entry flourish — content-scale (narrow) so it reads as a
+              "page begins here" mark rather than a duplicate of Header's
+              chrome band. Sits above the section tag like a 두루마리 cap. */}
+          <TraditionalBand
+            idSuffix="hero-top"
+            className="block w-20 h-[3px] mb-4 text-ink-soft/35"
+          />
           <p className="text-xs tracking-[0.3em] text-ink-soft uppercase">
             Spatial Acoustic Intelligence
           </p>

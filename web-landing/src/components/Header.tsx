@@ -2,6 +2,7 @@ import { Link, NavLink } from "react-router-dom";
 
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
+import TraditionalBand from "./TraditionalBand";
 
 // Mobile-only nav: tree sidebar collapses on small screens, so the
 // nav lives in a horizontal scroller in the header instead.
@@ -15,7 +16,7 @@ const MOBILE_NAV = [
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-50 backdrop-blur bg-paper/80 border-b border-paper-deep">
+    <header className="sticky top-0 z-50 backdrop-blur bg-paper/80">
       <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between gap-4">
         <Link
           to="/"
@@ -58,6 +59,12 @@ export default function Header() {
           </a>
         </div>
       </div>
+      {/* 회문 chrome trim — replaces the previous flat border. Subtler than
+          Footer's prominent band so the page bottom stays the dominant trim. */}
+      <TraditionalBand
+        idSuffix="header-bot"
+        className="block w-full h-[3px] text-ink-soft/35"
+      />
     </header>
   );
 }
