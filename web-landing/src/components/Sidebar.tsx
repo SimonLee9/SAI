@@ -10,6 +10,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/lab",      label: "Sound Lab" },
   { to: "/studio",   label: "Studio"    },
   { to: "/tuner",    label: "Tuner"     },
+  { to: "/live",     label: "Live"      },
   { to: "/faq",      label: "FAQ"       },
 ];
 

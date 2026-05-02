@@ -215,21 +215,25 @@ CSS 변수로 정의되며, `:root` (라이트)와 `:root.dark` (다크)에서 �
 | `/lab` | Sound Lab | 6 프리셋 신호 시험기 |
 | `/studio` | Studio | 멀티트랙 16-step 시퀀서 (Drums + Bass + Melody, 스케일 선택, ✨ 알고리즘 생성기) |
 | `/tuner` | Tuner | 5밴드 비주얼 EQ (drag-on-curve) |
+| `/live` | Live | 외부 음원 캡처 (mic / tab audio) + 3-band EQ + 카라오케 트릭 + 녹음 |
 | `/faq` | FAQ | 자주 묻는 질문 |
 
 각 페이지 하단에는 항상 `<Waitlist />` (전환 surface). Footer는 layout 차원에서 모든 페이지에 표시.
 
 **Studio의 ✨ 생성 (algorithmic, not AI)**: Suno-class 음악 생성은 1인 프로젝트로 불가능 (수백억 자본 + ML팀 + GPU 클러스터 필요). 그리고 SAI는 스피커 회사지 음악 생성 회사가 아니라 정체성 정렬에도 어긋남. 대신 rule-based 알고리즘 생성기 — 4종 드럼 프리셋 (Boom Bap·House·D&B·한국풍) × 3종 베이스 그루브 × Markov 멜로디 walker — 가 한 클릭에 musical 시작 패턴을 생성. **AI 흉내가 아니라, AI보다 항상 coherent하고 즉시 편집 가능하다는 게 강점**. 향후 옵션으로 외부 API(MusicGen via Replicate 등) 통합 가능하지만 default UX는 끝까지 0-cost rule-based.
 
-**3개 audio 도구의 분담**: 모두 스피커를 다루지만 역할이 다르다.
+**4개 audio 도구의 분담**: 모두 스피커를 다루지만 입력원·역할이 다르다.
 
 | 페이지 | 행위 | 입력 → 출력 |
 |---|---|---|
-| Sound Lab | **측정** | 신호(톤·스윕·노이즈) → 들어보기 |
+| Sound Lab | **측정** | 합성 신호(톤·스윕·노이즈) → 들어보기 |
 | Studio    | **연주** | 그리드 패턴 → 5음계 음악 |
-| Tuner     | **조형** | 음원 + EQ 곡선 → 결을 깎은 출력 |
+| Tuner     | **조형** | 합성 음원 + EQ 곡선 → 결을 깎은 출력 |
+| **Live**  | **수신·변형** | 외부 음원(mic·tab) → 3-band EQ + 카라오케 트릭 → 녹음 |
 
-세 페이지가 함께 있어 "스피커가 어떤 신호를 통과시키나"(Lab), "스피커가 어떤 음악을 만들 수 있나"(Studio), "스피커의 결을 어떻게 깎을 것인가"(Tuner) — 측정·연주·조형 세 각도에서 제품을 평가할 수 있다. 향후 Phase 3 web-dashboard에서 Tuner는 실 디바이스의 EQ를 직접 컨트롤하는 인터페이스로 재사용될 계획.
+네 페이지가 함께 있어 "스피커가 어떤 신호를 통과시키나"(Lab), "스피커가 어떤 음악을 만들 수 있나"(Studio), "스피커의 결을 어떻게 깎을 것인가"(Tuner), "스피커가 실제 음악을 어떻게 다루나"(Live) — 측정·연주·조형·수신 네 각도. Tuner와 Live는 향후 Phase 3 web-dashboard에서 실 디바이스의 EQ를 직접 컨트롤하는 인터페이스로 재사용될 계획.
+
+**Live의 정직한 한계 (Tier 1)**: Karaoke는 ML 음원 분리가 아니라 스테레오 L−R 트릭 — 정중앙 보컬은 잘 약화되지만, 와이드 리버브나 한쪽 치우친 보컬은 그대로 남는다. "멜로디만 남기기" 같은 진짜 source separation은 Spleeter/Demucs급 ML 모델이 필요하며 Tier 2(별도 라운드)로 미뤄두었다. Audio→sheet 자동 채보는 Tier 3 (Phase 4 후보).
 
 ### 6.2 사이드바 (`<Sidebar />`)
 

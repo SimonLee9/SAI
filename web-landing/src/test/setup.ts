@@ -40,6 +40,35 @@ beforeEach(() => {
     (window as unknown as { ResizeObserver: typeof ResizeObserverStub }).ResizeObserver =
       ResizeObserverStub;
   }
+
+  // jsdom has no MediaDevices / MediaRecorder. Stub both so LiveCapture's
+  // initial render doesn't throw; tests that need real behaviour can
+  // override navigator.mediaDevices on a per-test basis.
+  if (!("mediaDevices" in navigator)) {
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: {
+        getUserMedia:    () => Promise.reject(new Error("not implemented")),
+        getDisplayMedia: () => Promise.reject(new Error("not implemented")),
+      },
+    });
+  }
+  if (typeof (window as unknown as { MediaRecorder?: unknown }).MediaRecorder === "undefined") {
+    class MediaRecorderStub {
+      static isTypeSupported() { return true; }
+      state = "inactive";
+      ondataavailable: ((e: { data: Blob }) => void) | null = null;
+      onstop: (() => void) | null = null;
+      start()  { this.state = "recording"; }
+      stop()   { this.state = "inactive"; this.onstop?.(); }
+    }
+    (window as unknown as { MediaRecorder: typeof MediaRecorderStub }).MediaRecorder =
+      MediaRecorderStub;
+  }
+  if (typeof URL.createObjectURL === "undefined") {
+    URL.createObjectURL = () => "blob:mock";
+    URL.revokeObjectURL = () => {};
+  }
 });
 
 afterEach(() => {

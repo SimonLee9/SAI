@@ -217,6 +217,30 @@ export class MockAudioContext {
     };
   }
 
+  createChannelSplitter(_n: number = 2): MockAudioNode {
+    return makeBaseNode<MockAudioNode>(this, "channel-splitter", {});
+  }
+
+  createChannelMerger(_n: number = 2): MockAudioNode {
+    return makeBaseNode<MockAudioNode>(this, "channel-merger", {});
+  }
+
+  createMediaStreamSource(_stream: unknown): MockAudioNode & { channelCount: number } {
+    return makeBaseNode<MockAudioNode & { channelCount: number }>(
+      this,
+      "media-stream-source",
+      { channelCount: 2 },
+    );
+  }
+
+  createMediaStreamDestination(): MockAudioNode & { stream: { id: string } } {
+    return makeBaseNode<MockAudioNode & { stream: { id: string } }>(
+      this,
+      "media-stream-destination",
+      { stream: { id: "mock-stream-" + nextId } },
+    );
+  }
+
   resume() { this.state = "running"; return Promise.resolve(); }
   close()  { this.state = "closed";  return Promise.resolve(); }
 }

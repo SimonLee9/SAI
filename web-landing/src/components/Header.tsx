@@ -13,6 +13,7 @@ const MOBILE_NAV = [
   { to: "/lab",      label: "Lab"       },
   { to: "/studio",   label: "Studio"    },
   { to: "/tuner",    label: "Tuner"     },
+  { to: "/live",     label: "Live"      },
   { to: "/faq",      label: "FAQ"       },
 ];
 
