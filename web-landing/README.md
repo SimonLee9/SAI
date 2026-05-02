@@ -14,9 +14,11 @@ S.A.I 브랜드·제품 랜딩 페이지. Phase 0 마케팅 surface 및 사전 �
 ```bash
 cd web-landing
 npm install
-npm run dev      # http://localhost:5174
-npm run build    # → dist/
-npm run preview  # 빌드 결과 로컬 미리보기
+npm run dev         # http://localhost:5174
+npm run build       # → dist/
+npm run preview     # 빌드 결과 로컬 미리보기
+npm test            # vitest 한 번 실행 (CI에서 동일하게 사용)
+npm run test:watch  # vitest watch 모드 (개발 중)
 ```
 
 > 포트 5174는 `web-dashboard`(5173)와 겹치지 않도록 의도적으로 분리.
@@ -105,6 +107,16 @@ CLI로:
 npm run build
 npx wrangler pages deploy dist --project-name sai-landing
 ```
+
+## Tests
+
+`vitest` + `@testing-library/react` + `jsdom`. 핵심 인터랙티브 컴포넌트의 상태 전이를 단위 테스트로 보호 — 특히 SoundLab의 play/stop/preset 전환은 Pink Noise 누수 같은 quirk가 다시 들어오지 못하게 회귀 테스트로 잡혀 있습니다.
+
+- `src/test/audio-mock.ts` — 최소 Web Audio API mock. 모든 source/gain을 `audioRegistry`에 기록해 테스트가 stop/disconnect/gain ramp까지 검증 가능.
+- `src/test/setup.ts` — 매 테스트 전에 mock 설치, jsdom의 미구현 `getContext` 스텁.
+- `src/components/SoundLab.test.tsx` — 4개 회귀: 첫 프리셋 시작 / 프리셋 전환 시 직전 source 침묵 / "정지" 버튼 / active 프리셋 토글 off.
+
+새 인터랙티브 컴포넌트를 추가할 때는 같은 패턴으로 최소 한 개의 상태 전이 테스트를 동봉해 주세요.
 
 ## Known limits (Phase 0)
 

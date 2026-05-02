@@ -31,6 +31,7 @@ jobs:
           cache-dependency-path: web-landing/package-lock.json
 
       - run: npm ci
+      - run: npm test
       - run: npm run build
 
       # Upload the built artifact so PRs can be inspected without re-building.

@@ -9,6 +9,8 @@ dist-ssr
 # TypeScript incremental build cache
 *.tsbuildinfo
 
-# tsc -b emits these from vite.config.ts when building
+# tsc -b emits these from vite.config.ts / vitest.config.ts when building
 vite.config.d.ts
 vite.config.js
+vitest.config.d.ts
+vitest.config.js
