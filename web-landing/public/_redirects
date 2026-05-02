@@ -1,0 +1,4 @@
+# Cloudflare Pages — SPA fallback. Any unknown path is served the SPA's
+# index.html so client-side routing can resolve it. Static assets matched
+# on disk are served as-is and never reach this rule.
+/*    /index.html    200
