@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { generatePattern } from "./studio/generators";
+import { generatePattern, progressionsForScale } from "./studio/generators";
 import {
   buildScaleRows,
   SCALES,
@@ -270,14 +270,34 @@ export default function Sequencer() {
   const [lastDrumLabel, setLastDrumLabel] = useState<string | null>(null);
   const [lastBassLabel, setLastBassLabel] = useState<string | null>(null);
 
+  // Optional pin: when non-null, ✨ 생성 forces this chord progression
+  // instead of picking randomly. Cleared automatically if the active
+  // scale stops supporting the pinned progression.
+  const [forcedProgId, setForcedProgId] = useState<string | null>(null);
+  const availableProgs = useMemo(
+    () => progressionsForScale(scale.intervals.length),
+    [scale],
+  );
+  useEffect(() => {
+    if (!forcedProgId) return;
+    if (!availableProgs.find((p) => p.id === forcedProgId)) {
+      setForcedProgId(null);
+    }
+  }, [availableProgs, forcedProgId]);
+
   const generate = useCallback(() => {
-    const p = generatePattern(bassRows.length, melodyRows.length);
+    const p = generatePattern(
+      bassRows.length,
+      melodyRows.length,
+      undefined,
+      forcedProgId ?? undefined,
+    );
     setDrums(p.drums);
     setBass(p.bass);
     setMelody(p.melody);
     setLastDrumLabel(p.drumLabel);
     setLastBassLabel(p.bassLabel);
-  }, [bassRows.length, melodyRows.length]);
+  }, [bassRows.length, melodyRows.length, forcedProgId]);
 
   // -------------------------------------------------------------------------
   // Render helpers
@@ -413,6 +433,20 @@ export default function Sequencer() {
           <span aria-hidden className="absolute top-1.5 right-1.5 w-1 h-1 rounded-full bg-injoo" />
           ✨ 생성
         </button>
+        <select
+          value={forcedProgId ?? "random"}
+          onChange={(e) => {
+            const v = e.target.value;
+            setForcedProgId(v === "random" ? null : v);
+          }}
+          className="rounded-md border border-paper-deep bg-paper text-ink px-2 py-1.5 text-xs font-mono hover:border-ink focus:outline-none focus:border-ink transition-colors"
+          aria-label="진행 선택"
+        >
+          <option value="random">진행: 무작위</option>
+          {availableProgs.map((p) => (
+            <option key={p.id} value={p.id}>{p.label}</option>
+          ))}
+        </select>
         {(lastDrumLabel || lastBassLabel) && (
           <span className="text-[10px] font-mono tracking-widest text-ink-mute uppercase whitespace-nowrap">
             {lastDrumLabel}

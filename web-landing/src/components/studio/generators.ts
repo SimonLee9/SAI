@@ -108,14 +108,24 @@ export type ChordProgression = {
 };
 
 export const PROGRESSIONS: ReadonlyArray<ChordProgression> = [
-  { id: "1-4-5-4", label: "I-IV-V-IV",   degrees: [1, 4, 5, 4] }, // works in 5음계 too
-  { id: "1-5-4-1", label: "I-V-IV-I",    degrees: [1, 5, 4, 1] },
-  { id: "1-3-4-5", label: "I-iii-IV-V",  degrees: [1, 3, 4, 5] },
-  { id: "1-2-3-4", label: "ascend",      degrees: [1, 2, 3, 4] },
-  { id: "1-5-6-4", label: "I-V-vi-IV",   degrees: [1, 5, 6, 4] }, // Major / Minor only
-  { id: "1-6-4-5", label: "I-vi-IV-V",   degrees: [1, 6, 4, 5] }, // Major / Minor only
-  { id: "6-4-1-5", label: "vi-IV-I-V",   degrees: [6, 4, 1, 5] }, // Major / Minor only
-  { id: "1-3-6-4", label: "I-iii-vi-IV", degrees: [1, 3, 6, 4] }, // Major / Minor only
+  // Length 2 — each chord lasts 8 sixteenths (half note). Slow harmonic pace.
+  { id: "1-5-half",  label: "I-V (half)",   degrees: [1, 5] },
+  { id: "1-4-half",  label: "I-IV (half)",  degrees: [1, 4] },
+  { id: "1-6-half",  label: "I-vi (half)",  degrees: [1, 6] }, // Major / Minor only
+
+  // Length 4 — each chord = quarter note. Default pop progressions.
+  { id: "1-4-5-4",   label: "I-IV-V-IV",    degrees: [1, 4, 5, 4] }, // works in 5음계 too
+  { id: "1-5-4-1",   label: "I-V-IV-I",     degrees: [1, 5, 4, 1] },
+  { id: "1-3-4-5",   label: "I-iii-IV-V",   degrees: [1, 3, 4, 5] },
+  { id: "1-2-3-4",   label: "ascend",       degrees: [1, 2, 3, 4] },
+  { id: "1-5-6-4",   label: "I-V-vi-IV",    degrees: [1, 5, 6, 4] }, // Major / Minor only
+  { id: "1-6-4-5",   label: "I-vi-IV-V",    degrees: [1, 6, 4, 5] }, // Major / Minor only
+  { id: "6-4-1-5",   label: "vi-IV-I-V",    degrees: [6, 4, 1, 5] }, // Major / Minor only
+  { id: "1-3-6-4",   label: "I-iii-vi-IV",  degrees: [1, 3, 6, 4] }, // Major / Minor only
+
+  // Length 8 — each chord = 8th note. Faster harmonic rhythm, jazz/funk feel.
+  { id: "1-4-5-4-x2", label: "I-IV-V-IV × 2",  degrees: [1, 4, 5, 4, 1, 4, 5, 4] }, // 5음계 호환
+  { id: "1-6-2-5-x2", label: "I-vi-ii-V × 2",  degrees: [1, 6, 2, 5, 1, 6, 2, 5] }, // Major / Minor
 ];
 
 /** Filter progressions whose every degree fits inside the active scale. */
@@ -151,10 +161,14 @@ export function generateBass(
   rowCount: number,
   scaleSize: number,
   rng: () => number,
+  forcedProgressionId?: string,
 ): { grid: boolean[][]; progression: ChordProgression; density: BassDensity } {
   const grid = emptyGrid(rowCount);
   const candidates = progressionsForScale(scaleSize);
-  const progression = candidates[Math.floor(rng() * candidates.length)];
+  const forced = forcedProgressionId
+    ? candidates.find((p) => p.id === forcedProgressionId)
+    : undefined;
+  const progression = forced ?? candidates[Math.floor(rng() * candidates.length)];
   const density = BASS_DENSITIES[Math.floor(rng() * BASS_DENSITIES.length)];
 
   if (rowCount === 0) return { grid, progression, density };
@@ -187,11 +201,52 @@ export function generateBass(
 }
 
 // ---------------------------------------------------------------------------
-// Melody — random walk on scale rows with strong bias toward stepwise
-// motion (smoother contour) and a guaranteed return to the tonic on the
-// last note of the bar. Note count varies 6–10.
+// Chord-tone rows for a given chord degree, expanded across both melody
+// octaves. Used to bias the markov walker toward harmonically-stable
+// notes on strong beats.
 // ---------------------------------------------------------------------------
-export function generateMelody(rowCount: number, rng: () => number): boolean[][] {
+function chordToneRows(
+  degree: number,
+  scaleSize: number,
+  melodyRowCount: number,
+): number[] {
+  const rows: number[] = [];
+  // Chord = root + 3rd + 5th, measured in scale-degree steps (0/2/4
+  // above the root). Scale-relative thirds, not semitone thirds —
+  // pentatonic and diatonic produce different sounding triads with
+  // the same code path.
+  for (const interval of [0, 2, 4]) {
+    const toneDegree = ((degree - 1 + interval) % scaleSize) + 1;
+    // Bottom-up index of the row in this scale's bass octave is
+    // (scaleSize - toneDegree). Melody spans `melodyRowCount` rows
+    // (= scaleSize × octaves), so map both octaves' positions:
+    for (let oct = 0; oct < melodyRowCount / scaleSize; ++oct) {
+      const row = melodyRowCount - 1 - (oct * scaleSize) - (toneDegree - 1);
+      if (row >= 0 && row < melodyRowCount) rows.push(row);
+    }
+  }
+  return rows;
+}
+
+function nearestRow(target: number[], cursor: number): number {
+  return target.reduce(
+    (best, r) => (Math.abs(r - cursor) < Math.abs(best - cursor) ? r : best),
+    target[0],
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Melody — markov walk that snaps toward chord tones on chord downbeats
+// when a progression is provided. Without a progression (legacy callers
+// + tests), it falls back to a pure random walk that just ends on the
+// tonic for a closed phrase. Note count varies 6–10.
+// ---------------------------------------------------------------------------
+export function generateMelody(
+  rowCount: number,
+  rng: () => number,
+  progression?: ChordProgression,
+  scaleSize?: number,
+): boolean[][] {
   const g = emptyGrid(rowCount);
   if (rowCount === 0) return g;
 
@@ -208,11 +263,33 @@ export function generateMelody(rowCount: number, rng: () => number): boolean[][]
   if (positions[0] !== 0 && rng() < 0.5) positions[0] = 0;
 
   let cursor = tonicRow - Math.floor(rng() * 2); // tonic or one above
+  const stepsPerChord = progression
+    ? STEPS / progression.degrees.length
+    : Number.POSITIVE_INFINITY;
 
   for (let i = 0; i < positions.length; ++i) {
+    const beat = positions[i];
     const isLast = i === positions.length - 1;
-    if (isLast) cursor = tonicRow;
-    g[Math.max(0, Math.min(rowCount - 1, cursor))][positions[i]] = true;
+
+    if (isLast) {
+      cursor = tonicRow;
+    } else if (
+      progression &&
+      scaleSize &&
+      beat % stepsPerChord === 0 &&
+      rng() < 0.7
+    ) {
+      // Strong beat (chord downbeat) — bias toward a chord tone of the
+      // current chord. Pick the chord-tone row closest to the current
+      // cursor so we still get smooth voice leading, just constrained
+      // to the harmony.
+      const chordIdx = Math.floor(beat / stepsPerChord);
+      const chordDegree = progression.degrees[chordIdx];
+      const targets = chordToneRows(chordDegree, scaleSize, rowCount);
+      if (targets.length > 0) cursor = nearestRow(targets, cursor);
+    }
+
+    g[Math.max(0, Math.min(rowCount - 1, cursor))][beat] = true;
 
     // Markov step: 70% step ±1, 25% leap ±2, 5% repeat.
     const r = rng();
@@ -245,13 +322,16 @@ export function generatePattern(
   bassRows: number,
   melodyRows: number,
   rng: () => number = makeRng(),
+  forcedProgressionId?: string,
 ): GeneratedPattern {
   const preset = DRUM_PRESETS[Math.floor(rng() * DRUM_PRESETS.length)];
-  const bass = generateBass(bassRows, bassRows, rng);
+  const scaleSize = bassRows;
+  const bass = generateBass(bassRows, scaleSize, rng, forcedProgressionId);
   return {
     drums: drumGridFromPreset(preset),
     bass: bass.grid,
-    melody: generateMelody(melodyRows, rng),
+    // Pass progression + scale to enable chord-aware strong-beat bias.
+    melody: generateMelody(melodyRows, rng, bass.progression, scaleSize),
     drumLabel: preset.label,
     bassLabel: `${bass.progression.label} · ${bass.density}`,
   };

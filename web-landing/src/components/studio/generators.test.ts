@@ -115,4 +115,63 @@ describe("Studio generators — pure functions", () => {
     expect(a.bass).toEqual(b.bass);
     expect(a.melody).toEqual(b.melody);
   });
+
+  it("PROGRESSIONS includes lengths 2, 4, and 8", () => {
+    const lengths = new Set(PROGRESSIONS.map((p) => p.degrees.length));
+    expect(lengths.has(2)).toBe(true);
+    expect(lengths.has(4)).toBe(true);
+    expect(lengths.has(8)).toBe(true);
+  });
+
+  it("forced progressionId is honoured by generateBass", () => {
+    // Find a 5음계-compatible progression and pin it.
+    const target = PROGRESSIONS.find((p) => p.degrees.every((d) => d <= 5))!;
+    for (let seed = 1; seed <= 10; ++seed) {
+      const r = generateBass(5, 5, makeRng(seed), target.id);
+      expect(r.progression.id).toBe(target.id);
+    }
+  });
+
+  it("forced progressionId is ignored if it doesn't fit the scale", () => {
+    // A length-4 progression that uses degree 6 (Major/Minor only).
+    const incompatible = PROGRESSIONS.find(
+      (p) => p.degrees.length === 4 && p.degrees.includes(6),
+    )!;
+    const r = generateBass(5, 5, makeRng(7), incompatible.id);
+    // Generator falls back to a random valid progression.
+    expect(r.progression.degrees.every((d) => d <= 5)).toBe(true);
+  });
+
+  it("chord-aware melody places chord tones on at least most chord downbeats", () => {
+    // For a known progression, check that on chord downbeats the melody
+    // hits a chord tone "most of the time" (the bias is 70% chance, so
+    // we expect ≥1 chord tone per progression in expectation; we just
+    // check the bias machinery is wired — at least one downbeat hit
+    // lands on a chord tone across many seeds).
+    const prog = PROGRESSIONS.find((p) => p.id === "1-4-5-4")!;
+    let chordToneHits = 0;
+    let totalDownbeats = 0;
+    for (let seed = 1; seed <= 30; ++seed) {
+      const m = generateMelody(10 /* 2 octaves of penta */, makeRng(seed), prog, 5);
+      const stepsPerChord = STEPS / prog.degrees.length;
+      for (let chord = 0; chord < prog.degrees.length; ++chord) {
+        const downbeat = chord * stepsPerChord;
+        // For pentatonic, chord-tone rows for degree D in 10-row melody:
+        // intervals 0/2/4 → degrees D, D+2, D+4 (mod 5)
+        const degrees = new Set([0, 2, 4].map((iv) => ((prog.degrees[chord] - 1 + iv) % 5) + 1));
+        for (let row = 0; row < 10; ++row) {
+          if (m[row][downbeat]) {
+            // Row in scale: 10 - row - 1 → bottom-up index, octave = floor / 5
+            const bottomUp = 10 - 1 - row;
+            const degree = (bottomUp % 5) + 1;
+            totalDownbeats += 1;
+            if (degrees.has(degree)) chordToneHits += 1;
+          }
+        }
+      }
+    }
+    // With 70% bias (and final-note tonic snap which is also a chord tone),
+    // most downbeat hits should land on chord tones.
+    expect(chordToneHits / Math.max(1, totalDownbeats)).toBeGreaterThan(0.5);
+  });
 });
