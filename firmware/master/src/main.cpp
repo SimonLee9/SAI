@@ -18,14 +18,9 @@
 
 #include <Arduino.h>
 #include "sai_config.h"
-
-// ============================================
-// Forward declarations
-// ============================================
-void setup_bluetooth();
-void setup_i2s();
-void setup_led();
-void update_led_from_audio();
+#include "sai_led.h"
+#include "sai_audio.h"
+#include "sai_bt.h"
 
 // ============================================
 // Setup
@@ -39,10 +34,10 @@ void setup() {
     Serial.println("  Spatial Acoustic Intelligence");
     Serial.println("=================================");
 
-    // TODO Phase 1: Implement each subsystem
-    // setup_i2s();    // uses SAI_I2S_BCLK / LRC / DOUT
-    // setup_led();    // uses SAI_LED_PIN, SAI_LED_COUNT
-    // setup_bluetooth();
+    // Phase 1 wiring (implementations land in subsequent commits):
+    // sai_led_init();                                 // step a
+    // sai_audio_init_output();                        // step b
+    // sai_bt_init("S.A.I", /*cb=*/nullptr);           // step c
 
     Serial.println("[BOOT] System ready. Waiting for BT connection...");
 }

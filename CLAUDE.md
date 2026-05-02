@@ -20,7 +20,7 @@ S.A.I (Spatial Acoustic Intelligence, "사이") — 3D 프린팅 기반 모듈�
 | `dsp-tools` | `pip install -r requirements.txt` | `python analysis/sweep_generator.py --duration 5` |
 | `web-dashboard` | (Phase 3에 부트스트랩) | — |
 
-두 펌웨어 환경의 `build_flags`에 `-I../shared/lib`이 추가되어 있어, `#include "sai_config.h"`로 공유 핀맵·오디오 상수를 사용할 수 있다. `firmware/shared/lib/`가 향후 적절한 PlatformIO 라이브러리 구조(`<libname>/src/...`)를 가지게 되면 `lib_extra_dirs` 방식으로 마이그레이션 가능.
+`firmware/shared/lib/`는 PlatformIO 라이브러리 storage이며, 각 모듈은 자체 서브디렉토리를 가진다 (`sai_config/`, `sai_led/`, `sai_audio/`, `sai_bt/`). 두 펌웨어 환경에 `lib_extra_dirs = ../shared/lib`이 설정되어 있어, `#include "sai_config.h"`처럼 헤더 이름만으로 include 가능. 새 모듈 추가 시 같은 패턴으로 디렉토리만 만들면 된다 (별도 매니페스트 불필요).
 
 ## Conventions
 

@@ -62,16 +62,19 @@ S.A.I는 ESP32-S3를 두뇌로 하는 블루투스 스피커이다. Phase 1은 �
 
 ### 3.2 모듈 구성 (`firmware/shared/lib/`)
 
-| Module | 책임 | Phase |
-|---|---|---|
-| `audio/` | I2S 입출력, DMA 버퍼 관리, 샘플레이트 변환 | 1 |
-| `dsp/` | FFT (시각화용), Phase 3에 EQ/룸 보정 추가 | 1 → 3 |
-| `led/` | LED ring 구동 (FastLED 또는 직접 RMT) | 1 |
-| `bt/` | A2DP sink, 페어링 상태머신 | 1 |
-| `sync/` | ESP-NOW 기반 마스터↔위성 시간 동기화 | 2 |
-| `ota/` | Wi-Fi OTA 업데이트 | 3 |
+각 모듈은 PlatformIO 라이브러리 서브디렉토리이며, 헤더 이름만으로 include 한다 (`#include "sai_led.h"` 등). 빌드 환경의 `lib_extra_dirs = ../shared/lib`이 자동 검색을 담당.
 
-마스터/위성은 `platformio.ini`의 env로 분기, 공통 코드는 `shared/lib/` 재사용.
+| 라이브러리 | 헤더 | 책임 | Phase | 상태 |
+|---|---|---|---|---|
+| `sai_config/` | `sai_config.h` | 핀맵·오디오 파라미터·노드 역할 상수 | 1 | ✅ 헤더 |
+| `sai_led/` | `sai_led.h` | WS2812B ring 구동 (FastLED) | 1 | ✅ 헤더 / ⬜ impl |
+| `sai_audio/` | `sai_audio.h` | I2S TX (MAX98357A), 추후 RX (INMP441) | 1 | ✅ 헤더 / ⬜ impl |
+| `sai_bt/` | `sai_bt.h` | A2DP sink (master only) | 1 | ✅ 헤더 / ⬜ impl |
+| `sai_dsp/` | `sai_dsp.h` | FFT 시각화, 추후 EQ/보정 | 1 → 3 | ⬜ |
+| `sai_sync/` | — | ESP-NOW 마스터↔위성 동기화 | 2 | ⬜ |
+| `sai_ota/` | — | Wi-Fi OTA 업데이트 | 3 | ⬜ |
+
+마스터/위성은 `platformio.ini`의 env로 분기, 공통 코드는 위 라이브러리들을 재사용 (Satellite는 `sai_bt`를 링크하지 않는다).
 
 ### 3.3 Critical constraints
 
