@@ -12,9 +12,13 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 /**
- * Tree-style sidebar — desktop only. Mobile gets the top-bar nav inside
- * Header. The branch glyphs (├─ / └─) are rendered as actual characters
- * in the mono font so they stay aligned at any zoom.
+ * Sidebar — desktop only. Mobile uses the top-bar nav inside Header.
+ *
+ * No ASCII tree glyphs. The "you are here" signal is a single 인주
+ * vermilion dot to the left of the active label — matching the brand
+ * principle of one point of colour to mark importance. Inactive rows
+ * reserve the same dot width so the labels never shift horizontally
+ * when navigation changes.
  */
 export default function Sidebar() {
   return (
@@ -26,29 +30,39 @@ export default function Sidebar() {
         <p className="text-xs tracking-[0.3em] text-ink-soft uppercase">사이</p>
         <BrushStroke className="mt-1 block w-8 h-[5px] text-ink-soft" idSuffix="sb" />
 
-        <ul className="mt-5 space-y-0.5">
-          {NAV_ITEMS.map((item, i) => {
-            const isLast = i === NAV_ITEMS.length - 1;
-            return (
-              <li key={item.to} className="flex items-baseline gap-1.5 leading-7">
-                <span className="select-none text-ink-mute" aria-hidden>
-                  {isLast ? "└─" : "├─"}
-                </span>
-                <NavLink
-                  to={item.to}
-                  end={item.end}
-                  className={({ isActive }) =>
-                    "flex-1 px-2 py-0.5 rounded transition-colors " +
-                    (isActive
-                      ? "text-ink-heavy font-semibold bg-paper-deep"
-                      : "text-ink-soft hover:text-ink hover:bg-paper-deep/50")
-                  }
-                >
-                  {item.label}
-                </NavLink>
-              </li>
-            );
-          })}
+        <ul className="mt-6 space-y-0.5">
+          {NAV_ITEMS.map((item) => (
+            <li key={item.to}>
+              <NavLink to={item.to} end={item.end} className="block">
+                {({ isActive }) => (
+                  <span
+                    className={
+                      "flex items-center gap-3 px-2 py-1.5 rounded transition-colors " +
+                      (isActive ? "bg-paper-deep" : "hover:bg-paper-deep/50")
+                    }
+                  >
+                    {/* Reserved width — only the active row paints in 인주. */}
+                    <span
+                      aria-hidden
+                      className={
+                        "w-1.5 h-1.5 rounded-full shrink-0 transition-colors " +
+                        (isActive ? "bg-injoo" : "bg-transparent")
+                      }
+                    />
+                    <span
+                      className={
+                        isActive
+                          ? "text-ink-heavy font-semibold"
+                          : "text-ink-soft hover:text-ink"
+                      }
+                    >
+                      {item.label}
+                    </span>
+                  </span>
+                )}
+              </NavLink>
+            </li>
+          ))}
         </ul>
 
         <div className="mt-10 pl-5">
