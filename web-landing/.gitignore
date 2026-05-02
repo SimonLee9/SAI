@@ -3,3 +3,10 @@ dist
 dist-ssr
 *.local
 .vite
+
+# TypeScript incremental build cache
+*.tsbuildinfo
+
+# tsc -b emits these from vite.config.ts when building
+vite.config.d.ts
+vite.config.js
