@@ -1,4 +1,5 @@
 import { features } from "../data/content";
+import BrushStroke from "./BrushStroke";
 
 export default function Features() {
   return (
@@ -6,6 +7,7 @@ export default function Features() {
       <div className="mx-auto max-w-6xl px-6">
         <div className="max-w-2xl">
           <p className="text-xs tracking-[0.3em] text-ink-soft uppercase">Features</p>
+          <BrushStroke className="mt-2 block w-12 h-[6px] text-ink-soft" />
           <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight">
             소리·빛·형태·확장. 네 개의 결.
           </h2>

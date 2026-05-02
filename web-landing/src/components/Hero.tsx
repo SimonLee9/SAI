@@ -1,4 +1,5 @@
 import { brand } from "../data/content";
+import BrushStroke from "./BrushStroke";
 
 export default function Hero() {
   return (
@@ -24,7 +25,8 @@ export default function Hero() {
           <p className="text-xs tracking-[0.3em] text-ink-soft uppercase">
             Spatial Acoustic Intelligence
           </p>
-          <h1 className="mt-4 text-4xl md:text-6xl font-extrabold leading-[1.1] tracking-tight">
+          <BrushStroke className="mt-2 block w-12 h-[6px] text-ink-soft" />
+          <h1 className="mt-4 text-4xl md:text-6xl font-extrabold leading-[1.1] tracking-tight text-ink-heavy">
             {brand.tagline}
           </h1>
           <p className="mt-6 max-w-xl text-lg text-ink-soft leading-relaxed">
@@ -34,8 +36,10 @@ export default function Hero() {
           <div className="mt-10 flex flex-col sm:flex-row gap-3">
             <a
               href="#waitlist"
-              className="inline-flex justify-center items-center rounded-md bg-ink text-paper px-6 py-3 text-sm font-medium hover:bg-ink-soft transition-colors"
+              className="group inline-flex justify-center items-center gap-2 rounded-md bg-ink text-paper px-6 py-3 text-sm font-medium hover:bg-ink-soft transition-colors"
             >
+              {/* 인주 dot — small vermilion mark beside the primary action. */}
+              <span aria-hidden className="w-1.5 h-1.5 rounded-full bg-injoo group-hover:bg-injoo-soft transition-colors" />
               사전 알림 받기
             </a>
             <a

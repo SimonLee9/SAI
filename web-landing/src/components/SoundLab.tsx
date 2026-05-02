@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { soundPresets, type SoundPreset } from "../data/content";
+import BrushStroke from "./BrushStroke";
 
 const ANALYSER_FFT  = 256;          // → 128 frequency bins
 const BAR_COUNT     = 16;           // mirrors WS2812B ring on the device
@@ -241,6 +242,7 @@ export default function SoundLab() {
     <section id="lab" className="py-24 md:py-32 border-b border-paper-deep">
       <div className="mx-auto max-w-5xl px-6">
         <p className="text-xs tracking-[0.3em] text-ink-soft uppercase">Sound Lab</p>
+        <BrushStroke className="mt-2 block w-12 h-[6px] text-ink-soft" />
         <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight">
           음원별로, 사용하는 음역대가 다릅니다
         </h2>
@@ -267,12 +269,19 @@ export default function SoundLab() {
                   key={p.id}
                   onClick={() => (on ? stop() : play(p))}
                   className={
-                    "rounded-lg border p-4 text-left transition-colors " +
+                    "relative rounded-lg border p-4 text-left transition-colors " +
                     (on
                       ? "border-ink bg-ink text-paper"
                       : "border-paper-deep bg-paper hover:border-ink text-ink")
                   }
                 >
+                  {/* 인주 dot — only on the active preset; stays put through theme swaps. */}
+                  {on && (
+                    <span
+                      aria-hidden
+                      className="absolute top-2.5 right-2.5 w-1.5 h-1.5 rounded-full bg-injoo"
+                    />
+                  )}
                   <p className="text-sm font-semibold">{p.label}</p>
                   <p className={"mt-1 text-xs font-mono " + (on ? "text-paper/80" : "text-ink-mute")}>
                     {p.hint}

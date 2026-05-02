@@ -4,28 +4,43 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  /* Brand palette — 화선지·먹.
-   * The semantic tokens (paper / paper-* / ink / ink-*) are defined here so
-   * Tailwind generates utilities, but their *values* are overridden in
-   * :root and :root.dark below. The figure-ground inversion of light/dark
-   * mode happens by swapping the paper↔ink color values, NOT by writing
-   * dark: variants on every component.
+  /* Brand palette — 화선지·먹·인주.
    *
    *   light : paper = warm cream canvas, ink = warm black mark
    *   dark  : paper = cool dark canvas, ink = warm cream mark
+   *   both  : injoo = single 인주 vermilion accent (낙관, active states)
    *
-   * Same brush language. Two papers.
+   * Same brush language. Two papers. One stamp.
+   *
+   * 농담 (濃淡) — five-tier ink density, mirroring the traditional
+   * gradient from 초묵 (super-rich) through 청묵 (very diluted):
+   *   ink-heavy   초묵   strongest emphasis: hero headline only
+   *   ink         농묵   body, primary marks
+   *   ink-medium  중묵   sub-headlines, lead-in copy
+   *   ink-soft    담묵   labels, tags, secondary text
+   *   ink-mute    청묵   meta, disabled, hint
    */
 
   --color-paper:       #FAF7F2;
   --color-paper-soft:  #F5F0E8;
   --color-paper-deep:  #ECE5D9;
+
+  --color-ink-heavy:   #050402;
   --color-ink:         #1A1814;
+  --color-ink-medium:  #322C24;
   --color-ink-soft:    #4A453E;
   --color-ink-mute:    #8A8278;
 
-  /* Tertiary tints — kept available for very limited future use,
-   * but no longer drive primary UI emphasis (먹 itself is the accent). */
+  /* 인주 — vermilion 낙관 stamp. The single point of colour in an
+   * otherwise monochrome composition. Use sparingly: brand seal +
+   * functional emphasis (active state, success indicator, primary CTA
+   * accent dot). Each additional placement dilutes its weight. */
+  --color-injoo:       #A03525;
+  --color-injoo-soft:  #C45F4D;
+
+  /* Legacy tints — no longer drive primary UI; kept defined for any
+   * stray reference and to avoid breaking imports. Will be deleted once
+   * we confirm no production component still resolves them. */
   --color-amber:       #D97706;
   --color-amber-deep:  #B45309;
   --color-amber-soft:  #FCD9A8;
@@ -45,22 +60,36 @@
   --color-paper:       #FAF7F2;
   --color-paper-soft:  #F5F0E8;
   --color-paper-deep:  #ECE5D9;
+
+  --color-ink-heavy:   #050402;
   --color-ink:         #1A1814;
+  --color-ink-medium:  #322C24;
   --color-ink-soft:    #4A453E;
   --color-ink-mute:    #8A8278;
+
+  --color-injoo:       #A03525;
+  --color-injoo-soft:  #C45F4D;
 }
 
 /* Dark mode — 먹이 캔버스, 한지가 자국. Figure–ground inversion.
  * Quality 먹 carries a faint blue-green; we mirror that with a slightly
  * cool dark. Paper highlight stays warm so the cream-vs-ink language
- * remains recognisably hanji (한지) rather than generic dark UI. */
+ * remains recognisably hanji (한지) rather than generic dark UI.
+ * 인주 nudges slightly warmer/brighter for legibility on the dark canvas
+ * but stays unmistakably the same vermilion. */
 :root.dark {
   --color-paper:       #0E0F11;
   --color-paper-soft:  #16181B;
   --color-paper-deep:  #20242A;
+
+  --color-ink-heavy:   #FFFCF6;
   --color-ink:         #F0EBE0;
+  --color-ink-medium:  #DAD3C5;
   --color-ink-soft:    #C5C0B6;
   --color-ink-mute:    #7A766E;
+
+  --color-injoo:       #C04638;
+  --color-injoo-soft:  #D87567;
 }
 
 html, body, #root {

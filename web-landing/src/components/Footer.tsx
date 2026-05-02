@@ -1,3 +1,5 @@
+import BrushStroke from "./BrushStroke";
+import InkSeal from "./InkSeal";
 import Logo from "./Logo";
 
 export default function Footer() {
@@ -13,10 +15,13 @@ export default function Footer() {
           <p className="mt-3 text-sm text-paper/70 max-w-xs leading-relaxed">
             공간과 소리, 그 사이를 채우는 지능. Seoul, KR · 2026.
           </p>
+          {/* 낙관 — single 인주 punctuation in the otherwise mono footer. */}
+          <InkSeal size={48} className="mt-6 text-injoo" />
         </div>
 
         <nav className="text-sm">
           <p className="text-xs tracking-widest text-paper/50">EXPLORE</p>
+          <BrushStroke className="mt-1 block w-10 h-[5px] text-paper/40" idSuffix="ftr-explore" />
           <ul className="mt-3 space-y-2">
             <li><a href="#features"  className="hover:text-paper transition-colors">Features</a></li>
             <li><a href="#showcase"  className="hover:text-paper transition-colors">Product</a></li>
@@ -27,6 +32,7 @@ export default function Footer() {
 
         <nav className="text-sm">
           <p className="text-xs tracking-widest text-paper/50">CONNECT</p>
+          <BrushStroke className="mt-1 block w-10 h-[5px] text-paper/40" idSuffix="ftr-connect" />
           <ul className="mt-3 space-y-2">
             <li>
               <a

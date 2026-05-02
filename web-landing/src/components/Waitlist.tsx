@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import BrushStroke from "./BrushStroke";
 
 const STORAGE_KEY = "sai.waitlist.v1";
 const ENDPOINT = import.meta.env.VITE_WAITLIST_ENDPOINT as string | undefined;
@@ -58,6 +59,7 @@ export default function Waitlist() {
     <section id="waitlist" className="py-24 md:py-32 border-b border-paper-deep">
       <div className="mx-auto max-w-2xl px-6 text-center">
         <p className="text-xs tracking-[0.3em] text-ink-soft uppercase">Notify Me</p>
+        <BrushStroke className="mt-2 inline-block w-12 h-[6px] text-ink-soft" />
         <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight">
           가장 먼저 만나보세요
         </h2>
@@ -86,9 +88,21 @@ export default function Waitlist() {
         </form>
 
         <div className="mt-4 min-h-6 text-sm" aria-live="polite">
-          {state === "ok"       && <span className="text-ink">신청 완료. 출시 소식을 가장 먼저 보내드릴게요.</span>}
-          {state === "ok-local" && <span className="text-ink-soft">신청 완료. 일시적으로 로컬에 저장되어, 잠시 후 다시 전송됩니다.</span>}
-          {state === "error"    && <span className="text-ink-soft italic">올바른 이메일 주소인지 확인해 주세요.</span>}
+          {state === "ok" && (
+            <span className="inline-flex items-center gap-2 text-ink">
+              <span aria-hidden className="w-1.5 h-1.5 rounded-full bg-injoo" />
+              신청 완료. 출시 소식을 가장 먼저 보내드릴게요.
+            </span>
+          )}
+          {state === "ok-local" && (
+            <span className="inline-flex items-center gap-2 text-ink-soft">
+              <span aria-hidden className="w-1.5 h-1.5 rounded-full bg-injoo" />
+              신청 완료. 일시적으로 로컬에 저장되어, 잠시 후 다시 전송됩니다.
+            </span>
+          )}
+          {state === "error" && (
+            <span className="text-ink-soft italic">올바른 이메일 주소인지 확인해 주세요.</span>
+          )}
         </div>
 
         <p className="mt-8 text-xs text-ink-mute">
