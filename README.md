@@ -2,7 +2,12 @@
 
 > 공간과 소리, 그 **사이**를 채우는 지능
 
+[![CI](https://github.com/SimonLee9/SAI/actions/workflows/ci.yml/badge.svg)](https://github.com/SimonLee9/SAI/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Phase](https://img.shields.io/badge/phase-0%20%E2%80%94%20brand%20setup-D97706)](docs/technical/DESIGN.md)
+
+> 사전 알림 신청은 [web-landing/](web-landing/)의 Waitlist 섹션에서. 운영 도메인은 Phase 0 후반에 발표합니다.
+> 첫 dev log: [_안녕, 사이 — 첫 한 점에서 출발하며_](content/blog/0001-안녕-사이.md).
 
 ---
 
@@ -46,8 +51,9 @@ S.A.I/
 │   └── public/
 │
 ├── web-dashboard/    # 제품 제어 웹 UI (Phase 3, 미부트스트랩)
-│   ├── src/
-│   └── public/
+│
+├── services/         # 백엔드 서비스
+│   └── waitlist/     # Cloudflare Worker + KV — 사전 알림 수집
 │
 ├── hardware/          # 하드웨어 설계 자료
 │   ├── enclosure/     # 3D 프린팅 STL/STEP 파일
@@ -56,13 +62,14 @@ S.A.I/
 │
 ├── docs/              # 문서
 │   ├── business/      # 사업 계획서, 시장 분석
-│   ├── technical/     # 기술 사양서, 아키텍처
+│   ├── technical/     # 기술 사양서, 아키텍처 (DESIGN.md)
 │   └── brand/         # 브랜딩 가이드, 로고 자산
 │
-├── content/           # 콘텐츠 마케팅 자료
-│   ├── blog/          # 블로그 포스팅 원고
+├── content/           # 콘텐츠
+│   ├── blog/          # dev log / 블로그 원고
 │   └── youtube/       # 영상 기획안, 스크립트
 │
+├── .github/workflows/ # CI (web-landing · waitlist · firmware build)
 └── scripts/           # 빌드, 배포, 유틸리티 스크립트
 ```
 
@@ -76,7 +83,8 @@ S.A.I/
 |------|---------|---------|
 | PlatformIO | latest | ESP32 펌웨어 빌드 |
 | Python | 3.10+ | DSP 분석 도구 |
-| Node.js | 18+ | 웹 대시보드 |
+| Node.js | 22+ | web-landing · services |
+| Wrangler | latest | services/waitlist 배포 (`npx wrangler`) |
 | Fusion 360 | — | 3D 모델링 (optional) |
 
 ### Quick Start — 펌웨어 빌드
@@ -93,7 +101,10 @@ pio device monitor       # 시리얼 모니터
 ```bash
 cd dsp-tools
 pip install -r requirements.txt
-python analysis/sweep_generator.py   # 테스트 스윕 신호 생성
+python analysis/sweep_generator.py            # 테스트 스윕 WAV 생성
+python analysis/spectrum_simulator.py --tone 1000 --duration 1
+                                              # sai_dsp.cpp 동일 알고리즘으로
+                                              # LED 링이 어떻게 빛날지 미리보기
 ```
 
 ### Quick Start — 브랜드 랜딩 (Phase 0 활성)
@@ -104,13 +115,21 @@ npm install
 npm run dev              # http://localhost:5174
 ```
 
-### Quick Start — 웹 대시보드 (Phase 3, 미부트스트랩)
+### Quick Start — 사전 알림 백엔드
 
 ```bash
-cd web-dashboard
+cd services/waitlist
 npm install
-npm run dev              # http://localhost:5173
+npx wrangler login        # 첫 1회
+npm run dev               # http://localhost:8787 (로컬 테스트)
+npm run deploy            # production
 ```
+
+자세한 첫-배포 절차는 [services/waitlist/README.md](services/waitlist/README.md).
+
+### Web Dashboard (Phase 3 — 미부트스트랩)
+
+마스터 펌웨어가 WebSocket 서버를 노출하기 전까지는 `web-dashboard/` 디렉토리는 골격만 있고 매니페스트가 없습니다. Phase 3 진입 시 `npm create vite@latest`로 스캐폴드 예정.
 
 ---
 
@@ -118,10 +137,10 @@ npm run dev              # http://localhost:5173
 
 | Phase | Target | Status |
 |-------|--------|--------|
-| **Phase 0** | 레포 구조 세팅, 브랜드 계정 개설 | 🟢 In Progress |
-| **Phase 1** | 단일 BT 스피커 PoC (소리 + LED) | ⬜ Not Started |
+| **Phase 0** | 레포·브랜드·인프라 셋업 | 🟢 코드 완성 (web-landing · waitlist · CI · 펌웨어 모듈) |
+| **Phase 1** | 단일 BT 스피커 PoC (소리 + LED) | 🟡 펌웨어 코드 완성 · 하드웨어 bring-up 대기 |
 | **Phase 2** | 스테레오 무선 확장 (Master + Satellite) | ⬜ Not Started |
-| **Phase 3** | DSP 분석 툴 + 웹 대시보드 | ⬜ Not Started |
+| **Phase 3** | DSP 분석 툴 + web-dashboard | ⬜ Not Started |
 | **Phase 4** | 콘텐츠 런칭 + 킥스타터 준비 | ⬜ Not Started |
 
 ---
