@@ -28,9 +28,12 @@
 // ============================================
 static volatile uint32_t g_bt_samples_received = 0;
 
-static void on_bt_audio(const int16_t* /*samples*/, size_t count) {
-    // Phase 1 step (c): sink-only — count samples to confirm A2DP is decoding.
-    // Future: forward to sai_audio_write_samples + push to FFT for LED.
+static void on_bt_audio(const int16_t* samples, size_t count) {
+    // Forward decoded PCM straight to the I2S TX path. sai_audio's write
+    // is non-blocking with a short timeout, so this stays safe to call
+    // from the A2DP task. Dropped samples (returned < count) just mean
+    // the speaker briefly underran — preferable to blocking BT.
+    sai_audio_write_samples(samples, count);
     g_bt_samples_received += count;
 }
 
