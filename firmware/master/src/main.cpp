@@ -22,6 +22,7 @@
 #include "sai_led.h"
 #include "sai_audio.h"
 #include "sai_bt.h"
+#include "sai_dsp.h"
 
 // ============================================
 // Bring-up state
@@ -34,6 +35,9 @@ static void on_bt_audio(const int16_t* samples, size_t count) {
     // from the A2DP task. Dropped samples (returned < count) just mean
     // the speaker briefly underran — preferable to blocking BT.
     sai_audio_write_samples(samples, count);
+    // Tee into DSP for the audio-reactive LED ring; FFT runs inline once
+    // every kFftSize mono frames (~5.8 ms at 44.1 kHz, < 1 ms compute).
+    sai_dsp_push_samples(samples, count);
     g_bt_samples_received += count;
 }
 
@@ -90,6 +94,8 @@ void setup() {
         Serial.println("[BOOT] I2S init FAILED — skipping test tone");
     }
 
+    sai_dsp_init();
+
     if (sai_bt_init("S.A.I", on_bt_audio)) {
         Serial.println("[BOOT] BT A2DP sink up — pair phone with 'S.A.I'");
     } else {
@@ -113,6 +119,13 @@ void loop() {
                       (unsigned long)g_bt_samples_received);
     }
 
-    // TODO: drive sai_led_set_spectrum from on_bt_audio via FFT (sai_dsp).
-    delay(10);
+    // Audio-reactive LED ring: pull the latest spectrum frame (if any new
+    // FFT was computed since last loop iteration) and push to the LEDs.
+    uint8_t spectrum[SAI_DSP_BIN_COUNT];
+    if (sai_dsp_latest_spectrum(spectrum)) {
+        sai_led_set_spectrum(spectrum, SAI_DSP_BIN_COUNT);
+        sai_led_show();
+    }
+
+    delay(5);
 }
