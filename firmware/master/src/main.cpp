@@ -17,10 +17,36 @@
  */
 
 #include <Arduino.h>
+#include <math.h>
 #include "sai_config.h"
 #include "sai_led.h"
 #include "sai_audio.h"
 #include "sai_bt.h"
+
+// ============================================
+// Bring-up helpers (will be removed once BT audio is live)
+// ============================================
+static void play_test_tone(float freq_hz, uint32_t duration_ms) {
+    constexpr size_t kFramesPerChunk = 256;
+    int16_t buf[kFramesPerChunk * 2];                // interleaved stereo
+    const uint32_t total_frames = (uint32_t)SAI_SAMPLE_RATE * duration_ms / 1000;
+    const float    phase_inc    = 2.0f * (float)M_PI * freq_hz / SAI_SAMPLE_RATE;
+    float          phase        = 0.0f;
+
+    for (uint32_t emitted = 0; emitted < total_frames; ) {
+        const size_t this_chunk =
+            (total_frames - emitted < kFramesPerChunk) ? (total_frames - emitted)
+                                                       : kFramesPerChunk;
+        for (size_t i = 0; i < this_chunk; ++i) {
+            const int16_t s = (int16_t)(sinf(phase) * 16000.0f);  // ~-6 dBFS
+            buf[i * 2 + 0] = s;
+            buf[i * 2 + 1] = s;
+            phase += phase_inc;
+        }
+        sai_audio_write_samples(buf, this_chunk * 2);
+        emitted += this_chunk;
+    }
+}
 
 // ============================================
 // Setup
@@ -42,8 +68,15 @@ void setup() {
     sai_led_clear();
     Serial.println("[BOOT] LED self-test complete");
 
-    // Phase 1 wiring (implementations land in subsequent commits):
-    // sai_audio_init_output();                        // step b
+    if (sai_audio_init_output()) {
+        Serial.println("[BOOT] I2S init OK — playing 1kHz tone for 500ms");
+        play_test_tone(1000.0f, 500);
+        Serial.println("[BOOT] Test tone done");
+    } else {
+        Serial.println("[BOOT] I2S init FAILED — skipping test tone");
+    }
+
+    // Phase 1 wiring (next commit):
     // sai_bt_init("S.A.I", /*cb=*/nullptr);           // step c
 
     Serial.println("[BOOT] System ready. Waiting for BT connection...");
