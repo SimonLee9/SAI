@@ -34,8 +34,15 @@ void setup() {
     Serial.println("  Spatial Acoustic Intelligence");
     Serial.println("=================================");
 
+    sai_led_init();
+    // Boot LED self-test: R → G → B → off. Verifies wiring and all 3 channels.
+    sai_led_set_solid(255, 0, 0); sai_led_show(); delay(250);
+    sai_led_set_solid(0, 255, 0); sai_led_show(); delay(250);
+    sai_led_set_solid(0, 0, 255); sai_led_show(); delay(250);
+    sai_led_clear();
+    Serial.println("[BOOT] LED self-test complete");
+
     // Phase 1 wiring (implementations land in subsequent commits):
-    // sai_led_init();                                 // step a
     // sai_audio_init_output();                        // step b
     // sai_bt_init("S.A.I", /*cb=*/nullptr);           // step c
 
