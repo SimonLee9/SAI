@@ -212,10 +212,13 @@ CSS 변수로 정의되며, `:root` (라이트)와 `:root.dark` (다크)에서 �
 | `/` | Home | Hero + About |
 | `/features` | Features | 4 features 카드 |
 | `/product` | Product | Showcase + spec |
-| `/lab` | Sound Lab | SoundLab |
+| `/lab` | Sound Lab | 6 프리셋 신호 시험기 |
+| `/studio` | Studio | 5음계 16-step sequencer (Pentatonic Pattern Sketchpad) |
 | `/faq` | FAQ | 자주 묻는 질문 |
 
 각 페이지 하단에는 항상 `<Waitlist />` (전환 surface). Footer는 layout 차원에서 모든 페이지에 표시.
+
+**Sound Lab vs Studio**: 둘 다 스피커를 시험하는 자리지만 입력이 다르다. Sound Lab은 신호(주파수 톤·스윕·노이즈)로 *측정 도구*, Studio는 음악(멜로디·리듬·하모니)으로 *청취 도구*. 함께 쓰면 신호-수준과 음악-수준 양쪽에서 스피커를 평가할 수 있다.
 
 ### 6.2 사이드바 (`<Sidebar />`)
 

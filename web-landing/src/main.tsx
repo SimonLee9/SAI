@@ -8,6 +8,7 @@ import FeaturesPage from "./pages/FeaturesPage";
 import Home from "./pages/Home";
 import LabPage from "./pages/LabPage";
 import ProductPage from "./pages/ProductPage";
+import StudioPage from "./pages/StudioPage";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
@@ -19,6 +20,7 @@ createRoot(document.getElementById("root")!).render(
           <Route path="/features"  element={<FeaturesPage />} />
           <Route path="/product"   element={<ProductPage />} />
           <Route path="/lab"       element={<LabPage />} />
+          <Route path="/studio"    element={<StudioPage />} />
           <Route path="/faq"       element={<FAQPage />} />
           {/* Unknown paths fall back to Home rather than blanking out. */}
           <Route path="*"          element={<Home />} />

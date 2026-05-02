@@ -11,6 +11,7 @@ const MOBILE_NAV = [
   { to: "/features", label: "Features"  },
   { to: "/product",  label: "Product"   },
   { to: "/lab",      label: "Lab"       },
+  { to: "/studio",   label: "Studio"    },
   { to: "/faq",      label: "FAQ"       },
 ];
 
