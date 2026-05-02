@@ -93,32 +93,97 @@ export function drumGridFromPreset(preset: DrumPreset): boolean[][] {
 }
 
 // ---------------------------------------------------------------------------
-// Bass — three groove variants. Bottom row = tonic. A "5th-ish" row is
-// chosen as middle of the row stack since exact 5ths depend on scale; the
-// approximation reads as "groove bass" in any of the supported scales.
+// Chord progressions — defined as scale-degree sequences (1-indexed
+// positions within whatever scale is active), so the same progression
+// transposes naturally between 5음계 / Major / Minor. Length 4 keeps each
+// chord on a clean 4-step (quarter-note) boundary inside the 16-step bar.
+//
+// Roman-numeral labels are pentatonic-friendly nicknames; the actual
+// chord quality (major/minor) follows the active scale.
 // ---------------------------------------------------------------------------
-export function generateBass(rowCount: number, rng: () => number): boolean[][] {
-  const g = emptyGrid(rowCount);
-  if (rowCount === 0) return g;
+export type ChordProgression = {
+  id: string;
+  label: string;        // shown to the user, scale-degree style
+  degrees: ReadonlyArray<number>;
+};
 
-  const tonicRow = rowCount - 1;                  // bottom = lowest = tonic
-  const fifthRow = Math.max(0, Math.floor(rowCount / 2));
-  const v = Math.floor(rng() * 3);                // 0 / 1 / 2
+export const PROGRESSIONS: ReadonlyArray<ChordProgression> = [
+  { id: "1-4-5-4", label: "I-IV-V-IV",   degrees: [1, 4, 5, 4] }, // works in 5음계 too
+  { id: "1-5-4-1", label: "I-V-IV-I",    degrees: [1, 5, 4, 1] },
+  { id: "1-3-4-5", label: "I-iii-IV-V",  degrees: [1, 3, 4, 5] },
+  { id: "1-2-3-4", label: "ascend",      degrees: [1, 2, 3, 4] },
+  { id: "1-5-6-4", label: "I-V-vi-IV",   degrees: [1, 5, 6, 4] }, // Major / Minor only
+  { id: "1-6-4-5", label: "I-vi-IV-V",   degrees: [1, 6, 4, 5] }, // Major / Minor only
+  { id: "6-4-1-5", label: "vi-IV-I-V",   degrees: [6, 4, 1, 5] }, // Major / Minor only
+  { id: "1-3-6-4", label: "I-iii-vi-IV", degrees: [1, 3, 6, 4] }, // Major / Minor only
+];
 
-  if (v === 0) {
-    // Four-on-the-floor — sub kick under every quarter.
-    for (const b of [0, 4, 8, 12]) g[tonicRow][b] = true;
-  } else if (v === 1) {
-    // Tonic on quarters + 5th on the and-of-2 / and-of-4.
-    for (const b of [0, 4, 8, 12])  g[tonicRow][b] = true;
-    for (const b of [6, 14])         g[fifthRow][b] = true;
-  } else {
-    // Rolling 8ths — busier groove. Tonic + 5th alternating.
-    for (let b = 0; b < STEPS; b += 2) {
-      (b % 4 === 0 ? g[tonicRow] : g[fifthRow])[b] = true;
+/** Filter progressions whose every degree fits inside the active scale. */
+export function progressionsForScale(scaleSize: number): ChordProgression[] {
+  return PROGRESSIONS.filter((p) => p.degrees.every((d) => d <= scaleSize));
+}
+
+// ---------------------------------------------------------------------------
+// Bass — chord-progression-driven. Each chord lasts STEPS/N sixteenths
+// (4 with our default 4-chord progressions). Bass note = the chord's
+// root, mapped to whichever bass row the active scale has it on. Density
+// then controls how many hits land per chord.
+// ---------------------------------------------------------------------------
+export type BassDensity = "sparse" | "medium" | "dense";
+export const BASS_DENSITIES: ReadonlyArray<BassDensity> = ["sparse", "medium", "dense"];
+
+/**
+ * Map a scale-degree number (1-indexed) to a bass-grid row index.
+ *
+ * Bass row layout: row 0 = top of the UI = highest pitch within the
+ * single bass octave; row (rowCount-1) = bottom = lowest = tonic.
+ * Therefore row for degree D = rowCount - D.
+ */
+function degreeToRow(degree: number, rowCount: number): number {
+  // Wrap into the scale if a passing-tone overshoots (e.g. degree+2 might
+  // exceed scaleSize). Clamp instead of modulo so notes stay inside the
+  // displayed octave rather than jumping to a hidden upper register.
+  const d = Math.max(1, Math.min(rowCount, degree));
+  return rowCount - d;
+}
+
+export function generateBass(
+  rowCount: number,
+  scaleSize: number,
+  rng: () => number,
+): { grid: boolean[][]; progression: ChordProgression; density: BassDensity } {
+  const grid = emptyGrid(rowCount);
+  const candidates = progressionsForScale(scaleSize);
+  const progression = candidates[Math.floor(rng() * candidates.length)];
+  const density = BASS_DENSITIES[Math.floor(rng() * BASS_DENSITIES.length)];
+
+  if (rowCount === 0) return { grid, progression, density };
+
+  const stepsPerChord = STEPS / progression.degrees.length;
+
+  for (let i = 0; i < progression.degrees.length; ++i) {
+    const degree   = progression.degrees[i];
+    const rootRow  = degreeToRow(degree, rowCount);
+    const startStep = i * stepsPerChord;
+
+    // sparse  — just the root on the chord's down-beat.
+    // medium  — root on down-beat + same root on the chord's mid-beat.
+    // dense   — root on every other 8th, plus a 3rd-above passing tone
+    //           on the off-eighths for walking-bass feel.
+    if (density === "sparse") {
+      grid[rootRow][startStep] = true;
+    } else if (density === "medium") {
+      grid[rootRow][startStep] = true;
+      grid[rootRow][startStep + 2] = true;
+    } else {
+      grid[rootRow][startStep] = true;
+      grid[rootRow][startStep + 2] = true;
+      const passRow = degreeToRow(degree + 2, rowCount);
+      grid[passRow][startStep + 1] = true;
+      grid[passRow][startStep + 3] = true;
     }
   }
-  return g;
+  return { grid, progression, density };
 }
 
 // ---------------------------------------------------------------------------
@@ -161,14 +226,19 @@ export function generateMelody(rowCount: number, rng: () => number): boolean[][]
 }
 
 // ---------------------------------------------------------------------------
-// Top-level generator — drums + bass + melody together. Returns the chosen
-// drum preset's label so the UI can surface "this beat is House" etc.
+// Top-level generator — drums + bass + melody together. Returns the
+// chosen drum preset / chord progression / density labels so the UI can
+// surface "House · I-V-vi-IV · medium" etc. as a small badge.
+//
+// Note: bass row count IS the scale size (one octave per row group), so
+// rowCount and scaleSize are the same value at the call site.
 // ---------------------------------------------------------------------------
 export type GeneratedPattern = {
   drums: boolean[][];
   bass: boolean[][];
   melody: boolean[][];
   drumLabel: string;
+  bassLabel: string;        // "I-V-vi-IV · medium" etc.
 };
 
 export function generatePattern(
@@ -177,10 +247,12 @@ export function generatePattern(
   rng: () => number = makeRng(),
 ): GeneratedPattern {
   const preset = DRUM_PRESETS[Math.floor(rng() * DRUM_PRESETS.length)];
+  const bass = generateBass(bassRows, bassRows, rng);
   return {
     drums: drumGridFromPreset(preset),
-    bass: generateBass(bassRows, rng),
+    bass: bass.grid,
     melody: generateMelody(melodyRows, rng),
     drumLabel: preset.label,
+    bassLabel: `${bass.progression.label} · ${bass.density}`,
   };
 }

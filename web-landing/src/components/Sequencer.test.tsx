@@ -109,9 +109,9 @@ describe("Sequencer (Studio 2.0) — multi-track state machine", () => {
       .filter((c) => c.getAttribute("aria-pressed") === "true");
     expect(active.length).toBeGreaterThan(5);
 
-    // The drum preset label appears next to the button.
+    // Drum + chord-progression labels both appear next to the button.
     expect(
-      screen.getByText(/Boom Bap|House|D&B|한국풍/),
+      screen.getByText(/(Boom Bap|House|D&B|한국풍).*(sparse|medium|dense)/),
     ).toBeInTheDocument();
   });
 });

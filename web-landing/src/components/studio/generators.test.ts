@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  BASS_DENSITIES,
   DRUM_PRESETS,
   drumGridFromPreset,
   generateBass,
   generateMelody,
   generatePattern,
   makeRng,
+  PROGRESSIONS,
+  progressionsForScale,
 } from "./generators";
 
 const STEPS = 16;
@@ -38,14 +41,37 @@ describe("Studio generators — pure functions", () => {
     expect(grid[0][0]).toBe(true); // kick on the downbeat
   });
 
-  it("generateBass produces a non-empty grid in any of the three variants", () => {
-    // Try several seeds; with rowCount=5 every variant should fire some hits.
+  it("generateBass returns a chord-progression + density that fits the active scale", () => {
+    // Pentatonic (size 5): only progressions whose max degree ≤ 5 are valid.
     for (let seed = 1; seed <= 10; ++seed) {
-      const grid = generateBass(5, makeRng(seed));
-      expect(grid).toHaveLength(5);
-      expect(countActive(grid)).toBeGreaterThan(0);
-      // No row should overflow 16 steps.
-      for (const row of grid) expect(row).toHaveLength(STEPS);
+      const r = generateBass(5, 5, makeRng(seed));
+      expect(r.grid).toHaveLength(5);
+      expect(countActive(r.grid)).toBeGreaterThan(0);
+      for (const row of r.grid) expect(row).toHaveLength(STEPS);
+      expect(r.progression.degrees.every((d) => d <= 5)).toBe(true);
+      expect(BASS_DENSITIES).toContain(r.density);
+    }
+  });
+
+  it("progressionsForScale filters by max degree", () => {
+    const five = progressionsForScale(5);
+    const seven = progressionsForScale(7);
+    expect(five.length).toBeLessThan(seven.length);
+    expect(seven.length).toBe(PROGRESSIONS.length);
+    for (const p of five) expect(Math.max(...p.degrees)).toBeLessThanOrEqual(5);
+  });
+
+  it("bass places the chord root on each chord's downbeat", () => {
+    // Force a known progression by exhausting the rng to pick a specific one
+    // is awkward; instead, scan the produced grid and verify that for each
+    // 4-step chord window, *some* row has a hit on the window's first step.
+    for (let seed = 1; seed <= 15; ++seed) {
+      const r = generateBass(7, 7, makeRng(seed));
+      for (let chord = 0; chord < r.progression.degrees.length; ++chord) {
+        const downbeat = chord * (STEPS / r.progression.degrees.length);
+        const anyHit = r.grid.some((row) => row[downbeat]);
+        expect(anyHit).toBe(true);
+      }
     }
   });
 
@@ -71,13 +97,15 @@ describe("Studio generators — pure functions", () => {
     }
   });
 
-  it("generatePattern returns valid dimensions for drums, bass, melody", () => {
+  it("generatePattern returns valid dimensions and labels", () => {
     const p = generatePattern(7, 14, makeRng(42));
     expect(p.drums).toHaveLength(4);
     expect(p.bass).toHaveLength(7);
     expect(p.melody).toHaveLength(14);
     expect(p.drumLabel).toBeTruthy();
     expect(DRUM_PRESETS.map((d) => d.label)).toContain(p.drumLabel);
+    // Bass label is "<progression> · <density>".
+    expect(p.bassLabel).toMatch(/^.+ · (sparse|medium|dense)$/);
   });
 
   it("seeded generation is deterministic", () => {

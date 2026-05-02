@@ -260,19 +260,23 @@ export default function Sequencer() {
     setDrums(emptyPattern(DRUM_ORDER.length));
     setBass(emptyPattern(bassRows.length));
     setMelody(emptyPattern(melodyRows.length));
-    setLastGenLabel(null);
+    setLastDrumLabel(null);
+    setLastBassLabel(null);
   }, [bassRows.length, melodyRows.length]);
 
-  // Last generator preset label — small badge so the user knows what
-  // groove the algorithm picked.
-  const [lastGenLabel, setLastGenLabel] = useState<string | null>(null);
+  // Last generator labels — small badges so the user knows what the
+  // algorithm picked across drums (genre groove) and bass
+  // (chord progression + rhythmic density).
+  const [lastDrumLabel, setLastDrumLabel] = useState<string | null>(null);
+  const [lastBassLabel, setLastBassLabel] = useState<string | null>(null);
 
   const generate = useCallback(() => {
     const p = generatePattern(bassRows.length, melodyRows.length);
     setDrums(p.drums);
     setBass(p.bass);
     setMelody(p.melody);
-    setLastGenLabel(p.drumLabel);
+    setLastDrumLabel(p.drumLabel);
+    setLastBassLabel(p.bassLabel);
   }, [bassRows.length, melodyRows.length]);
 
   // -------------------------------------------------------------------------
@@ -409,9 +413,11 @@ export default function Sequencer() {
           <span aria-hidden className="absolute top-1.5 right-1.5 w-1 h-1 rounded-full bg-injoo" />
           ✨ 생성
         </button>
-        {lastGenLabel && (
-          <span className="text-[10px] font-mono tracking-widest text-ink-mute uppercase">
-            {lastGenLabel}
+        {(lastDrumLabel || lastBassLabel) && (
+          <span className="text-[10px] font-mono tracking-widest text-ink-mute uppercase whitespace-nowrap">
+            {lastDrumLabel}
+            {lastDrumLabel && lastBassLabel ? " · " : ""}
+            {lastBassLabel}
           </span>
         )}
         <button
