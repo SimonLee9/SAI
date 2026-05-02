@@ -1,0 +1,136 @@
+# S.A.I — Technical Design
+
+> 작성일: 2026-05-02 · Status: **Draft (Phase 0)**
+
+본 문서는 Phase 0~1 진입 시점의 기술 설계 초안이다. 결정 사항은 확정 표시(✅)를, 미결정 항목은 TBD로 마크한다.
+
+---
+
+## 1. System overview
+
+S.A.I는 ESP32-S3를 두뇌로 하는 블루투스 스피커이다. Phase 1은 단일 노드(모노 또는 스테레오 1.0)로 시작하고, Phase 2에서 마스터 + 위성 무선 동기화로 확장한다.
+
+```
+[Phone/PC] ──BT/A2DP──▶ [Master ESP32-S3] ──ESP-NOW──▶ [Satellite ESP32-S3]
+                             │                                │
+                             ├─ I2S ──▶ Class-D AMP ──▶ Driver
+                             └─ RMT ──▶ WS2812B LED ring     (동일 구조)
+```
+
+핵심 가치 제안:
+
+1. 한국적 미감의 인클로저 (달항아리·곡선 모티브, PETG/PLA 3D 인쇄)
+2. 음악 반응형 LED 시각화 (FFT 기반 주파수 매핑)
+3. 모듈식 무선 확장 (포고 핀 + 자석으로 위성 결합)
+
+---
+
+## 2. Hardware
+
+핀맵·샘플레이트 등 펌웨어 측 상수의 단일 출처는 [`firmware/shared/lib/sai_config.h`](../../firmware/shared/lib/sai_config.h)이다. 본 문서는 그 결정을 요약한다.
+
+| Component | 선택 | Phase | 비고 |
+|---|---|---|---|
+| Board | ESP32-S3-DevKitC-1 (N8R8: 8MB Flash, 8MB PSRAM, qio_opi) | 1 | ✅ |
+| DAC/AMP | MAX98357A (I2S, 모노 3W) | 1 | ✅ |
+| Driver | 풀레인지 2", 4Ω, 3W | 1 | ✅ |
+| Mic (측정/액티브 센싱) | INMP441 (I2S MEMS) | 1 | ✅ |
+| LED | WS2812B ring 16개 (`SAI_LED_COUNT`로 모듈별 조정) | 1 | ✅ |
+| Power | USB-C 5V | 1 | ✅ Phase 1 USB-only |
+| Battery | 18650 + BMS | 2+ | TBD |
+| Enclosure | PETG vs PLA | 1 | TBD: 인쇄 품질 vs 내열 |
+
+핀맵 (sai_config.h):
+
+| 신호 | GPIO |
+|---|---|
+| I2S AMP BCLK / LRC / DOUT | 5 / 4 / 6 |
+| INMP441 SCK / WS / SD | 16 / 15 / 17 |
+| WS2812B DATA | 21 |
+
+오디오 파라미터: 44.1 kHz · 16-bit · stereo. 자세한 BOM은 [hardware/bom/](../../hardware/bom/) (Phase 1 진입 시 작성).
+
+---
+
+## 3. Firmware architecture
+
+### 3.1 Build framework
+
+- **Arduino-ESP32** (PlatformIO `framework = arduino`) 확정. 라이브러리 생태계(ESP32-A2DP, FastLED)와 프로토타이핑 속도를 우선시한다.
+- 향후 I2S DMA 정밀 제어가 필요해지면 ESP-IDF 컴포넌트를 부분 도입 검토 (마스터 노드의 `audio/` 모듈 한정).
+- 빌드 시스템: PlatformIO. 환경: `master`, `satellite` (각각 자체 `platformio.ini`).
+
+### 3.2 모듈 구성 (`firmware/shared/lib/`)
+
+| Module | 책임 | Phase |
+|---|---|---|
+| `audio/` | I2S 입출력, DMA 버퍼 관리, 샘플레이트 변환 | 1 |
+| `dsp/` | FFT (시각화용), Phase 3에 EQ/룸 보정 추가 | 1 → 3 |
+| `led/` | LED ring 구동 (FastLED 또는 직접 RMT) | 1 |
+| `bt/` | A2DP sink, 페어링 상태머신 | 1 |
+| `sync/` | ESP-NOW 기반 마스터↔위성 시간 동기화 | 2 |
+| `ota/` | Wi-Fi OTA 업데이트 | 3 |
+
+마스터/위성은 `platformio.ini`의 env로 분기, 공통 코드는 `shared/lib/` 재사용.
+
+### 3.3 Critical constraints
+
+- Phase 2 마스터↔위성 오디오 동기화 오차 **< 1 ms**. ESP-NOW + PTP-유사 동기화 검토 필요.
+- LED 갱신은 오디오 인터럽트 우선순위 아래로 묶어 글리치 방지.
+
+---
+
+## 4. DSP toolchain (`dsp-tools/`)
+
+| Subdir | 목적 | Phase |
+|---|---|---|
+| `analysis/` | 측정 마이크 → FFT → 주파수/위상 응답 (matplotlib) | 1 |
+| `calibration/` | 측정 응답 → 역필터 계수(FIR/IIR) → 펌웨어 헤더로 export | 3 |
+| `neural/` | NN 기반 룸 보정·음색 추천 | 3+ |
+
+측정 마이크: **UMIK-1 가정** (보정 파일 제공). 자체 마이크 개발은 미정.
+
+---
+
+## 5. Web dashboard (`web-dashboard/`)
+
+**Phase 3** 시작. 마스터 펌웨어에 WebSocket 서버가 들어간 후 착수한다 ([web-dashboard/README.md](../../web-dashboard/README.md) 참조).
+
+- **스택**: React + TypeScript + Vite, Tailwind CSS, WebSocket 통신.
+- **기능**: 노드 자동 탐색, 공간 맵 시각화, 룸 보정 위저드, 실시간 시각화, 음향/조명 프리셋, Matter/MQTT 브리지.
+
+Phase 1·2 동안에는 `web-dashboard/`를 부트스트랩하지 않는다 (Phase 3 진입 시 `npm create vite@latest`로 스캐폴드).
+
+---
+
+## 6. Phase roadmap
+
+| Phase | 결과물 | 핵심 리스크 |
+|---|---|---|
+| 0 | 레포·브랜드 셋업 | — |
+| 1 | 단일 BT 스피커 PoC (소리 + LED) | I2S 클럭 정확도, 인클로저 음향 튜닝 |
+| 2 | 스테레오 무선 확장 (Master + Satellite) | ESP-NOW 동기화 오차 < 1 ms |
+| 3 | DSP 측정 툴 + 웹 대시보드 | 측정 마이크 보정, OTA 안정성 |
+| 4 | 콘텐츠 런칭 + 킥스타터 | 마케팅, 양산 BOM, 안전 인증 |
+
+---
+
+## 7. Open questions
+
+Phase 1 진입 전:
+
+1. 인클로저 재질 (PETG vs PLA) — 인쇄 테스트 후 결정.
+2. 샘플레이트 일관성 — `sai_config.h`는 44.1 kHz, `dsp-tools/analysis/sweep_generator.py`는 48 kHz. 측정 신호는 별도 SR이어도 무방하지만, 의도(상위 SR로 측정 → 다운샘플) 명시 필요.
+
+Phase 2+ :
+
+3. 배터리 포함 여부 — Phase 1 USB-only, Phase 2부터 18650 + BMS 검토.
+4. 측정 마이크 — UMIK-1을 외부 측정에, INMP441을 노드 내장 액티브 센싱에 분리 운용. UMIK 외 자체 캘리브레이션 마이크 개발 여부 미정.
+5. ESP-NOW 동기화 정확도 PoC — 마스터/위성 간 < 1 ms 달성 가능성을 Phase 1 후반에 검증 필요.
+
+---
+
+## 8. References
+
+- [README.md](../../README.md) — 프로젝트 개요, 빌드 빠른 시작
+- [CLAUDE.md](../../CLAUDE.md) — Claude Code 협업 가이드

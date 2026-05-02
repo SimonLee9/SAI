@@ -1,0 +1,42 @@
+# CLAUDE.md
+
+S.A.I (Spatial Acoustic Intelligence, "사이") — 3D 프린팅 기반 모듈러 오디오 시스템. ESP32-S3 + I2S Class-D 앰프, WS2812B LED 시각화를 결합한 블루투스 스피커. Phase 2에서 포고 핀 + 자석으로 스테레오 확장.
+
+## Repository layout
+
+- `firmware/` — ESP32-S3 펌웨어 (C++/PlatformIO). `master/`, `satellite/`, 공유 라이브러리는 `shared/lib/`.
+- `dsp-tools/` — 오디오 분석·보정 (Python 3.10+). `analysis/`, `calibration/`, `neural/`.
+- `web-dashboard/` — 제어 UI (React + TypeScript + Vite).
+- `hardware/` — `enclosure/` (STL/STEP), `pcb/`, `bom/`.
+- `docs/` — `business/`, `technical/` (설계 문서: `docs/technical/DESIGN.md`), `brand/`.
+- `content/` — 블로그·유튜브 원고.
+- `scripts/` — 빌드·유틸리티 스크립트.
+
+## Build & run
+
+| Subproject | Setup | Run |
+|---|---|---|
+| `firmware/master` (또는 `satellite`) | (PlatformIO 자동 의존성 설치) | `pio run -t upload && pio device monitor` |
+| `dsp-tools` | `pip install -r requirements.txt` | `python analysis/sweep_generator.py --duration 5` |
+| `web-dashboard` | (Phase 3에 부트스트랩) | — |
+
+`firmware/master/platformio.ini`와 `firmware/satellite/platformio.ini`의 `lib_extra_dirs`가 `firmware/shared/lib/`를 가리키므로, 두 노드 모두 `#include "sai_config.h"`로 공유 핀맵을 사용할 수 있다.
+
+## Conventions
+
+- 문서·주석: 제품/UX 카피는 한국어, 기술 식별자(함수명, 변수명, 로그)는 영어.
+- 라이선스: MIT. 파일별 헤더는 추가하지 않는다.
+- 브랜치: `main` 트렁크 기반. 큰 작업만 feature 브랜치.
+- 커밋: Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:` ...). 예시는 `git log`.
+- 코드 스타일: 펌웨어는 Arduino-ESP32 (PlatformIO `framework = arduino`), Python은 PEP 8, 웹은 ESLint + Prettier (Phase 3 부트스트랩 시 설정).
+
+## Current phase
+
+**Phase 0 — 레포·브랜드 셋업** (in progress, 2026-05-02 기준).
+전체 로드맵은 [README.md](README.md), 기술 세부는 [docs/technical/DESIGN.md](docs/technical/DESIGN.md).
+
+## Working with Claude Code on this repo
+
+- 사용 가능한 스킬: `init`(CLAUDE.md 갱신), `review`(PR 리뷰), `security-review`, `simplify`(변경 사항 코드 품질 점검), `claude-api`(SDK 코드 작성). `/skill-name` 형식으로 호출.
+- 자동 메모리는 `~/.claude/projects/-home-lee-code-SAI/memory/`에 저장된다 (Claude Code 내부, 레포에는 들어가지 않음).
+- 큰 변경 전에는 `EnterPlanMode`로 계획 합의 후 실행.
