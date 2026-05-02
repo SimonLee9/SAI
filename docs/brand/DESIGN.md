@@ -68,7 +68,7 @@ CSS 변수로 정의되며, `:root` (라이트)와 `:root.dark` (다크)에서 �
 
 ### 2.5 자개 (Najeon) — 재질, 색이 아님
 
-**중요**: 자개는 색 토큰이 아니라 **재질(material)**입니다. "단 한 점의 색(인주)" 원칙을 깨지 않으면서 흑백의 빈틈을 채우는 layer.
+**중요**: 자개는 색 토큰이 아니라 **재질(material)**입니다. "단 한 점의 색(인주)" 원칙을 깨지 않으면서 흑백의 빈틈을 채우는 layer. 자개는 5색이 어우러져 **하나의 빛나는 표면**을 만들기 때문에 단일 색이 아닌 면(面)으로 인식된다.
 
 자개는 5-stop 무지갯빛 linear gradient로 구현:
 
@@ -161,6 +161,8 @@ CSS 변수로 정의되며, `:root` (라이트)와 `:root.dark` (다크)에서 �
 ### 5.2 사용 위치 (현재)
 
 모든 섹션 헤더의 태그 라벨 아래에 `najeon underline` 1줄 (`Hero / Features / Showcase / SoundLab / Waitlist / About / FAQ`). Footer의 `EXPLORE` / `CONNECT` 라벨, Sidebar의 `사이` 라벨에도 동일 처리. 즉 페이지 모든 얇은 직선이 자개 무늬.
+
+또한 **SoundLab 16-band visualizer**의 막대 색도 같은 자개 5-stop을 따른다 (`SoundLab.tsx`의 `najeonAt(t)` 함수 — BrushStroke의 SVG gradient와 stop 값이 일치). 위치(주파수 빈)가 색을, 음량이 투명도를 담당하는 두 직교 축. 무대(canvas bg)는 양 모드 모두 어둡게 고정 (`bg-ink dark:bg-paper`)하여 pearl 톤이 항상 빛나도록 보장.
 
 ### 5.3 사용 가이드
 
