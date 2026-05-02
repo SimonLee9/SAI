@@ -8,7 +8,8 @@
  *   - Audio-reactive WS2812B LED visualization
  *
  * Hardware:
- *   - ESP32-S3-DevKitC-1 (N8R8)
+ *   - ESP32 (original — ESP32-DevKitC-V4 / WROOM-32E module).
+ *     A2DP needs Classic Bluetooth, which only the original ESP32 has.
  *   - MAX98357A I2S amplifier module
  *   - WS2812B LED strip
  *   - 2" full-range speaker driver (4Ω, 3W)

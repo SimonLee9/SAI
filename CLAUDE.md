@@ -1,10 +1,10 @@
 # CLAUDE.md
 
-S.A.I (Spatial Acoustic Intelligence, "사이") — 3D 프린팅 기반 모듈러 오디오 시스템. ESP32-S3 + I2S Class-D 앰프, WS2812B LED 시각화를 결합한 블루투스 스피커. Phase 2에서 포고 핀 + 자석으로 스테레오 확장.
+S.A.I (Spatial Acoustic Intelligence, "사이") — 3D 프린팅 기반 모듈러 오디오 시스템. ESP32 + I2S Class-D 앰프, WS2812B LED 시각화를 결합한 블루투스 스피커. Phase 2에서 포고 핀 + 자석으로 스테레오 확장. (보드는 원래 ESP32-S3였으나 A2DP에 필요한 Classic BT가 없어 원조 ESP32로 전환 — 자세한 사유는 [docs/technical/DESIGN.md](docs/technical/DESIGN.md) §2.)
 
 ## Repository layout
 
-- `firmware/` — ESP32-S3 펌웨어 (C++/PlatformIO). `master/`, `satellite/`, 공유 라이브러리는 `shared/lib/`.
+- `firmware/` — ESP32 펌웨어 (C++/PlatformIO). `master/`, `satellite/`, 공유 라이브러리는 `shared/lib/`.
 - `dsp-tools/` — 오디오 분석·보정 (Python 3.10+). `analysis/`, `calibration/`, `neural/`.
 - `web-landing/` — 브랜드/제품 랜딩 페이지 (Vite + React + TS + Tailwind v4). Sound Lab 데모와 사전 알림 폼. **Phase 0에서 활성**.
 - `web-dashboard/` — 제품 제어 UI (계획 단계, **Phase 3** — 마스터 펌웨어 WebSocket 서버 후 부트스트랩).

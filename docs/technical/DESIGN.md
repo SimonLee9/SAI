@@ -8,10 +8,10 @@
 
 ## 1. System overview
 
-S.A.I는 ESP32-S3를 두뇌로 하는 블루투스 스피커이다. Phase 1은 단일 노드(모노 또는 스테레오 1.0)로 시작하고, Phase 2에서 마스터 + 위성 무선 동기화로 확장한다.
+S.A.I는 ESP32를 두뇌로 하는 블루투스 스피커이다. Phase 1은 단일 노드(모노 또는 스테레오 1.0)로 시작하고, Phase 2에서 마스터 + 위성 무선 동기화로 확장한다.
 
 ```
-[Phone/PC] ──BT/A2DP──▶ [Master ESP32-S3] ──ESP-NOW──▶ [Satellite ESP32-S3]
+[Phone/PC] ──BT/A2DP──▶ [Master ESP32] ──ESP-NOW──▶ [Satellite ESP32]
                              │                                │
                              ├─ I2S ──▶ Class-D AMP ──▶ Driver
                              └─ RMT ──▶ WS2812B LED ring     (동일 구조)
@@ -31,7 +31,7 @@ S.A.I는 ESP32-S3를 두뇌로 하는 블루투스 스피커이다. Phase 1은 �
 
 | Component | 선택 | Phase | 비고 |
 |---|---|---|---|
-| Board | ESP32-S3-DevKitC-1 (N8R8: 8MB Flash, 8MB PSRAM, qio_opi) | 1 | ✅ |
+| Board | ESP32 (원조, ESP32-DevKitC-V4 / WROOM-32E) | 1 | ✅ |
 | DAC/AMP | MAX98357A (I2S, 모노 3W) | 1 | ✅ |
 | Driver | 풀레인지 2", 4Ω, 3W | 1 | ✅ |
 | Mic (측정/액티브 센싱) | INMP441 (I2S MEMS) | 1 | ✅ |
@@ -40,13 +40,17 @@ S.A.I는 ESP32-S3를 두뇌로 하는 블루투스 스피커이다. Phase 1은 �
 | Battery | 18650 + BMS | 2+ | TBD |
 | Enclosure | PETG vs PLA | 1 | TBD: 인쇄 품질 vs 내열 |
 
+**보드 선택 결정 (2026-05-02)**: 처음에 ESP32-S3로 잡혀 있었으나, ESP32-S3는 BLE 5.0만 가지고 **Bluetooth Classic이 없어 A2DP 불가능**. A2DP는 폰→스피커 음악 스트리밍의 표준이라 포기하면 사용성이 무너지므로, **원조 ESP32 (Classic BT 보유)**로 전환. PSRAM/연산력은 줄지만 Phase 1의 16-band FFT + LED 시각화는 충분히 처리. Phase 2에서 satellite는 BT가 필요 없으므로 ESP32-S3로 분기 가능 (PSRAM 활용 여지 남김).
+
 핀맵 (sai_config.h):
 
 | 신호 | GPIO |
 |---|---|
-| I2S AMP BCLK / LRC / DOUT | 5 / 4 / 6 |
+| I2S AMP BCLK / LRC / DOUT | 5 / 4 / **22** |
 | INMP441 SCK / WS / SD | 16 / 15 / 17 |
 | WS2812B DATA | 21 |
+
+> GPIO 6–11은 원조 ESP32의 SPI flash에 예약되어 있어, 기존 S3-era SAI_I2S_DOUT=6은 22로 이전.
 
 오디오 파라미터: 44.1 kHz · 16-bit · stereo. 자세한 BOM은 [hardware/bom/](../../hardware/bom/) (Phase 1 진입 시 작성).
 
@@ -56,9 +60,9 @@ S.A.I는 ESP32-S3를 두뇌로 하는 블루투스 스피커이다. Phase 1은 �
 
 ### 3.1 Build framework
 
-- **Arduino-ESP32 v2** (`framework = arduino`, `platform = espressif32` 공식 레지스트리) 확정. 라이브러리 생태계(ESP32-A2DP, FastLED)와 프로토타이핑 속도를 우선시한다.
-- ESP-IDF는 **4.x 기반**이며, sai_audio는 그에 맞춰 legacy `driver/i2s.h` API 사용 (`i2s_driver_install` / `i2s_set_pin` / `i2s_write`).
-- **ESP-IDF 5+ 전환 보류 사유**: ESP32-A2DP 라이브러리가 Arduino-ESP32 v3을 거부 (`BluetoothA2DPCommon.h`에서 `#error`). sai_audio가 새 `driver/i2s_std.h`를 쓰려면 v3 + IDF 5가 필요한데, 그러면 BT 스택이 무너진다. ESP32-A2DP가 v3을 지원하는 시점에 sai_audio + sai_bt를 함께 마이그레이션 (pioarduino 포크 사용).
+- **Arduino-ESP32 v2** (`framework = arduino`, `platform = espressif32` 공식 레지스트리) + ESP-IDF 4.x.
+- 보드: `esp32dev` (원조 ESP32, ESP32-WROOM-32E 모듈 기준). S3 → 원조 ESP32 전환 사유는 §2 참고 (A2DP를 위한 Classic BT 필요).
+- sai_audio: legacy `driver/i2s.h` API (`i2s_driver_install` / `i2s_set_pin` / `i2s_write`). 새 `driver/i2s_std.h`는 IDF 5에서만 제공되지만, IDF 5 전환은 ESP32-A2DP가 Arduino-ESP32 v3을 지원할 때까지 보류.
 - 빌드 시스템: PlatformIO. 환경: `master`, `satellite` (각각 자체 `platformio.ini`).
 
 ### 3.2 모듈 구성 (`firmware/shared/lib/`)

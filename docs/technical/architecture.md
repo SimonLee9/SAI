@@ -10,7 +10,7 @@
                        │ BT Audio Stream
                        ▼
 ┌─────────────────────────────────────────────────────┐
-│              MASTER NODE (ESP32-S3)                   │
+│              MASTER NODE (ESP32)                   │
 │                                                       │
 │  ┌──────────┐  ┌──────────┐  ┌──────────────────┐  │
 │  │ BT A2DP  │→│ Audio DSP │→│ I2S → MAX98357A   │  │
@@ -29,7 +29,7 @@
                        │ ESP-NOW (Phase 2)
                        ▼
 ┌─────────────────────────────────────────────────────┐
-│            SATELLITE NODE (ESP32-S3)                  │
+│            SATELLITE NODE (ESP32)                  │
 │                                                       │
 │  ┌───────────┐  ┌──────────────────┐                │
 │  │ ESP-NOW   │→│ I2S → MAX98357A   │                │
@@ -46,7 +46,7 @@
 
 ### Phase 1 — Single BT Speaker (MVP)
 
-- ESP32-S3 receives BT audio via A2DP profile
+- ESP32 receives BT audio via A2DP profile
 - Outputs to MAX98357A via I2S bus
 - Performs FFT on audio buffer for LED visualization
 - WS2812B reacts to frequency bands
@@ -70,7 +70,7 @@
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| MCU | ESP32-S3 (N8R8) | I2S, BT, WiFi, PSRAM for audio buffering |
+| MCU | ESP32 (WROOM-32E) | A2DP needs Classic BT — only the original ESP32 has it; S3/C3/C6 are BLE-only. PSRAM dropped (was an S3 feature); 4 MB flash is sufficient for Phase 1. |
 | Amplifier | MAX98357A | I2S input, no DAC needed, 3W sufficient for MVP |
 | LED protocol | WS2812B | Single-pin control, wide library support |
 | Wireless sync | ESP-NOW | No router needed, low latency (~5ms) |

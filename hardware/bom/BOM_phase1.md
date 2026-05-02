@@ -4,7 +4,7 @@
 
 | # | Component | Model | Qty | Est. Price | Notes |
 |---|-----------|-------|-----|-----------|-------|
-| 1 | MCU | ESP32-S3-DevKitC-1 (N8R8) | 1 | ~$8 | PSRAM 8MB 필수 |
+| 1 | MCU | ESP32-DevKitC-V4 (WROOM-32E, 4MB Flash) | 1 | ~$6 | A2DP 위해 Classic BT 필요 → 원조 ESP32 |
 | 2 | I2S Amplifier | MAX98357A module | 1 | ~$3 | 3W Class-D |
 | 3 | Speaker Driver | 2" Full-range (4Ω 3W) | 1 | ~$5 | |
 | 4 | Microphone | INMP441 MEMS (I2S) | 1 | ~$3 | Omnidirectional |
@@ -20,7 +20,7 @@
 
 | # | Component | Model | Qty | Notes |
 |---|-----------|-------|-----|-------|
-| 1 | MCU | ESP32-S3-DevKitC-1 (N8R8) | 2 | 위성 노드용 |
+| 1 | MCU | ESP32-DevKitC-V4 (WROOM-32E) | 2 | 위성 노드용. Classic BT 불필요 — ESP32-S3로 분기 옵션 있음 |
 | 2 | I2S Amplifier | MAX98357A | 2 | |
 | 3 | Speaker Driver | 2" Full-range (4Ω 3W) | 2 | |
 | 4 | Microphone | INMP441 | 2 | |

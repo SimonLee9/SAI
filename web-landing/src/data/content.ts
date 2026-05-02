@@ -20,7 +20,7 @@ export const features: Feature[] = [
   {
     tag: "AUDIO",
     title: "결을 잃지 않는 소리",
-    body: "ESP32-S3와 I2S Class-D 앰프로 44.1 kHz · 16-bit 무손실 블루투스 스트리밍. 페어링은 빠르고, 출력은 정확합니다.",
+    body: "ESP32와 I2S Class-D 앰프로 44.1 kHz · 16-bit 무손실 블루투스 스트리밍. 페어링은 빠르고, 출력은 정확합니다.",
   },
   {
     tag: "LIGHT",
@@ -42,14 +42,14 @@ export const features: Feature[] = [
 export const showcase = {
   caption: "PHASE 1 — SINGLE NODE",
   title: "한 점의 빛, 한 켤레의 소리",
-  body: "달항아리의 비례를 가져와 3D로 다듬은 외관. 청자의 차분한 색감과 단청의 따뜻한 포인트가 만나, 책상 위든 거실 한편이든 공간에 자연스럽게 녹아듭니다. 안에는 ESP32-S3의 두뇌, MAX98357A의 심장, INMP441의 귀가 들어 있습니다.",
+  body: "달항아리의 비례를 가져와 3D로 다듬은 외관. 청자의 차분한 색감과 단청의 따뜻한 포인트가 만나, 책상 위든 거실 한편이든 공간에 자연스럽게 녹아듭니다. 안에는 ESP32의 두뇌, MAX98357A의 심장, INMP441의 귀가 들어 있습니다.",
   specs: [
-    { label: "MCU",       value: "ESP32-S3 · 8MB Flash / 8MB PSRAM" },
+    { label: "MCU",       value: "ESP32 · WROOM-32E · 4MB Flash" },
     { label: "Amplifier", value: "MAX98357A · I²S Class-D · 3W" },
     { label: "Driver",    value: "Full-range 2\" · 4Ω · 3W" },
     { label: "Light",     value: "WS2812B · 16 LED ring" },
     { label: "Format",    value: "44.1 kHz · 16-bit · Stereo" },
-    { label: "Wireless",  value: "Bluetooth 5 · A2DP sink" },
+    { label: "Wireless",  value: "Bluetooth Classic · A2DP sink" },
   ],
 } as const;
 

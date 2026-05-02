@@ -1,6 +1,6 @@
 # firmware/
 
-ESP32-S3 임베디드 펌웨어 (PlatformIO + Arduino Framework)
+ESP32 임베디드 펌웨어 (PlatformIO + Arduino Framework). 보드: 원조 ESP32 (WROOM-32E 모듈), A2DP는 Classic BT 필요로 S3 미사용.
 
 ## Structure
 
@@ -17,13 +17,13 @@ firmware/
         └── sai_config.h   # 핀맵, 상수 정의
 ```
 
-## Hardware Pin Map (ESP32-S3-DevKitC-1)
+## Hardware Pin Map (ESP32 DevKitC / WROOM-32E)
 
 | Function | Component | ESP32 Pin | Notes |
 |----------|-----------|-----------|-------|
 | I2S BCLK | MAX98357A | GPIO 5 | Bit Clock |
 | I2S LRC | MAX98357A | GPIO 4 | Word Select |
-| I2S DOUT | MAX98357A | GPIO 6 | Audio Data |
+| I2S DOUT | MAX98357A | GPIO 22 | Audio Data (was 6 — flash-reserved on classic ESP32) |
 | MIC SCK | INMP441 | GPIO 16 | Serial Clock |
 | MIC WS | INMP441 | GPIO 15 | Word Select |
 | MIC SD | INMP441 | GPIO 17 | Serial Data |

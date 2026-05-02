@@ -18,7 +18,7 @@ S.A.I는 3D 프린팅 기반의 지능형 모듈러 오디오 시스템입니다
 
 ### Core Features (MVP)
 
-- 🔊 **High-Quality Audio** — ESP32-S3 + I2S Class-D 앰프 기반 블루투스 스피커
+- 🔊 **High-Quality Audio** — ESP32 + I2S Class-D 앰프 기반 블루투스 스피커
 - 💡 **Audio-Reactive LED** — 음악의 주파수에 반응하는 WS2812B 시각화
 - 🏺 **K-Design** — 한국적 곡선미를 살린 3D 프린팅 인클로저
 - 📡 **Modular Expansion** — 포고 핀 + 자석 결합으로 스테레오 확장 (Phase 2)
@@ -36,7 +36,7 @@ S.A.I는 3D 프린팅 기반의 지능형 모듈러 오디오 시스템입니다
 
 ```
 S.A.I/
-├── firmware/          # ESP32-S3 임베디드 펌웨어 (C++/PlatformIO)
+├── firmware/          # ESP32 임베디드 펌웨어 (C++/PlatformIO)
 │   ├── master/        # 마스터 노드 펌웨어
 │   ├── satellite/     # 위성 노드 펌웨어
 │   └── shared/        # 공유 라이브러리 (I2S, LED, Sync 등)
