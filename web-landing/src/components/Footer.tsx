@@ -1,11 +1,17 @@
 import BrushStroke from "./BrushStroke";
 import InkSeal from "./InkSeal";
 import Logo from "./Logo";
+import TraditionalBand from "./TraditionalBand";
 
 export default function Footer() {
   return (
-    <footer className="bg-ink text-paper py-12">
-      <div className="mx-auto max-w-6xl px-6 grid gap-8 md:grid-cols-3 items-start">
+    <footer className="bg-ink text-paper">
+      {/* 회문 hem — 한복 끝단처럼 surface 경계에 한 번. opacity로 은은하게. */}
+      <TraditionalBand
+        idSuffix="footer-top"
+        className="block w-full h-1.5 text-paper/35"
+      />
+      <div className="mx-auto max-w-6xl px-6 pt-12 pb-12 grid gap-8 md:grid-cols-3 items-start">
         <div>
           <div className="flex items-center gap-2">
             <Logo size={28} className="text-paper" />

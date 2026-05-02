@@ -70,6 +70,17 @@ CSS 변수로 정의되며, `:root` (라이트)와 `:root.dark` (다크)에서 �
 
 **중요**: 자개는 색 토큰이 아니라 **재질(material)**입니다. "단 한 점의 색(인주)" 원칙을 깨지 않으면서 흑백의 빈틈을 채우는 layer. 자개는 5색이 어우러져 **하나의 빛나는 표면**을 만들기 때문에 단일 색이 아닌 면(面)으로 인식된다.
 
+### 2.5.1 4중 layer 구조
+
+| Layer | 역할 | 색/재질 | 사용 빈도 |
+|---|---|---|---|
+| 먹 (ink)    | 구조 — 글자, 형태 | 검정·크림 (mode 따라) | 페이지 전반 |
+| 인주 (injoo) | 위계 — "이게 중요" | 인주 1색 | 페이지당 4곳 이내 |
+| 자개 (najeon) | 재질 — "정성 들인 자리" | 5-stop pearl gradient | 모든 얇은 직선 + SoundLab bars |
+| 무늬 (munui) | 문화적 흔적 — surface 경계 trim | currentColor (mode 따라) | **페이지당 1–2곳** |
+
+각 layer가 서로 다른 일을 하므로 충돌 없음. 새 layer를 추가할 때 기존 layer의 자리를 침범하지 않는지 검토 필수.
+
 자개는 5-stop 무지갯빛 linear gradient로 구현:
 
 | Stop | Hex | 비유 |
@@ -82,15 +93,17 @@ CSS 변수로 정의되며, `:root` (라이트)와 `:root.dark` (다크)에서 �
 
 라이트·다크 모드 양쪽에서 동일 gradient 사용 — pearl 톤이라 어느 캔버스에도 어울림. 자개를 "색"으로 보지 않는 이유는 5색이 어우러져 **하나의 빛나는 표면**을 만들기 때문 — `currentColor`가 아닌 SVG `<linearGradient>`로 렌더.
 
-**3중 layer 구조**:
+### 2.6 무늬 (Munui) — 4번째 layer, 문화적 trim
 
-| Layer | 역할 | 색 |
-|---|---|---|
-| 먹 (ink)    | 구조 — 글자, 형태 | 검정·크림 (mode 따라) |
-| 인주 (injoo) | 위계 — "이게 중요" | 인주 1색 |
-| 자개 (najeon) | 재질 — "정성 들인 자리" | gradient (재질) |
+전통 한국 패턴을 큰 surface의 경계에 띠 형태로 한 번 두르는 layer. 자개가 "재질"이라면 무늬는 "장식 — 문화적 흔적". 한복 끝단, 단청 띠, 고려 나전칠기의 테두리에서 가져왔다.
 
-각 layer가 다른 일을 하므로 충돌 없음.
+현재 구현된 패턴: **회문 (回紋, Korean meander)** — 직각 톱니가 가로로 반복되는 단순화 fret. Goryeo 시대 나전칠기 테두리 무늬와 같은 계열이라 자개와 짝을 이룸.
+
+**사용 규칙**:
+- 페이지당 **1–2곳**만. 모든 surface 경계마다 두르면 trim의 의미가 사라진다.
+- 색은 `currentColor` (mode 따라 자동 swap)
+- opacity는 25–40% — 보조 장식이지 주인공이 아님
+- 컨텐츠 안쪽이 아닌 **surface 경계** (Footer 상단, Header 하단 등)에만
 
 ---
 
@@ -170,6 +183,17 @@ CSS 변수로 정의되며, `:root` (라이트)와 `:root.dark` (다크)에서 �
 - `wet` (currentColor) — 자개를 쓰기 부적절한 자리, 또는 의도적으로 잉크 느낌만 원할 때.
 - `dry` (갈필) — 아직 production에 사용처 없음. 더 단호한 강조가 필요한 자리(예: 경고, 핵심 deadline)에 도입 검토.
 - 자개 stroke은 `currentColor`를 무시하고 자체 gradient 사용 — 부모의 `text-*` 클래스는 영향 없음 (의도된 동작).
+
+### 5.4 무늬 띠 (`<TraditionalBand />`)
+
+큰 surface 경계에 두르는 한국 전통 패턴 띠. SVG `<pattern>`을 가로로 tile하여 thin-band trim을 만든다.
+
+**Props**:
+- `pattern` — `"fret"` (현재 유일, 회문). 향후 `wave` (파도), `lattice` (창살) 등 추가 가능.
+- `idSuffix` — 페이지 내 고유 문자열 (SVG pattern id 충돌 방지)
+- `className` — 보통 `block w-full h-1.5 text-paper/35` 류로 높이·색·투명도 제어
+
+**현재 위치**: Footer 상단 (한복 끝단 모티프). 다른 자리 추가 전 §2.6 사용 규칙 참고.
 
 ---
 
@@ -252,8 +276,9 @@ focus 상태도 인주 사용 안 함 — ink 농묵으로 충분.
 3. ✅ 인주 사용처는 §2.3의 4곳 외에는 추가 안 한다.
 4. ✅ 다크 모드에서 figure-ground가 의도대로 inversion 되는지 토글로 확인한다.
 5. ✅ 새 섹션의 태그 라벨에는 `<BrushStroke quality="najeon" idSuffix="..." />` underline을 동봉한다 — `idSuffix`는 페이지 내 고유 문자열로.
-6. ✅ `prefers-reduced-motion` 사용자에게 큰 애니메이션을 강요하지 않는다.
-7. ✅ 한국어 본문은 차분한 voice를 유지 (느낌표·이모지 남용 금지).
+6. ✅ `<TraditionalBand />`는 페이지당 1–2곳만, surface 경계에서만 사용 (§2.6).
+7. ✅ `prefers-reduced-motion` 사용자에게 큰 애니메이션을 강요하지 않는다.
+8. ✅ 한국어 본문은 차분한 voice를 유지 (느낌표·이모지 남용 금지).
 
 ---
 
@@ -268,6 +293,7 @@ focus 상태도 인주 사용 안 함 — ink 농묵으로 충분.
 - **여백 (餘白)** — 빈 공간이 의미의 일부가 되는 구성. 충분한 padding과 max-width.
 - **인주 (印朱) / 낙관 (落款)** — 도장의 빨간색이 모노톤 그림에 단 하나의 색이 되는 전통. 우리 `injoo` 토큰.
 - **자개 (螺鈿) / 나전칠기 (螺鈿漆器)** — 옻칠한 검정 표면 위에 얇게 갈아 박은 진주층 조각의 무지갯빛. 고려 시대에 정점을 이룬 한국 공예. 우리 `najeon` brushstroke quality — 색이 아닌 재질로서, 얇은 직선 자리에 정성과 빛을 입힘.
+- **회문 (回紋)** — 단청 띠와 고려 나전칠기 테두리에 쓰인 직각 fret 무늬. 우리 `<TraditionalBand pattern="fret" />` — 한복 끝단처럼 surface 경계에 한 번 두른다.
 - **달항아리 (月壺)** — 비대칭의 비례, 단정한 곡선. Showcase 비주얼 모티프.
 
 이 참조는 **장식이 아니라 구조** — UI의 모든 결정이 이 어휘에서 파생된다.
