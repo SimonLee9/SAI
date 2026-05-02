@@ -9,10 +9,12 @@
  */
 
 #include <Arduino.h>
+#include "sai_config.h"
 
 void setup() {
     Serial.begin(115200);
-    Serial.println("[SAT] S.A.I Satellite Node — Phase 2 (Not yet implemented)");
+    Serial.printf("[SAT] S.A.I Satellite v%s — Phase 2 (Not yet implemented)\n",
+                  SAI_FW_VERSION);
 }
 
 void loop() {
