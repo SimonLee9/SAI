@@ -1,65 +1,121 @@
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import {
+  buildScaleRows,
+  SCALES,
+  type Scale,
+} from "./studio/scales";
+import {
+  playBass,
+  playDrum,
+  playMelody,
+  type DrumKind,
+  type MelodyOsc,
+} from "./studio/synth";
 
 // ---------------------------------------------------------------------------
-// Pentatonic 5-tone scale — Korean 5음계 (C major pentatonic, 도레미솔라).
-// All notes consonant with each other so any pattern the user draws sounds
-// musical without prior theory.
+// Constants
 // ---------------------------------------------------------------------------
-type Note = { name: string; freq: number };
-const PENTATONIC: ReadonlyArray<Note> = [
-  { name: "라", freq: 440.00 }, // A4 — top row
-  { name: "솔", freq: 392.00 }, // G4
-  { name: "미", freq: 329.63 }, // E4
-  { name: "레", freq: 293.66 }, // D4
-  { name: "도", freq: 261.63 }, // C4 — bottom row
+const COLS              = 16;
+const VOL_MAX           = 0.5;       // hearing-safety cap on master gain
+const LOOKAHEAD_MS      = 25;
+const SCHEDULE_AHEAD_S  = 0.1;
+
+const BASS_ROOT_MIDI    = 36;        // C2
+const BASS_OCTAVES      = 1;
+const MELODY_ROOT_MIDI  = 60;        // C4
+const MELODY_OCTAVES    = 2;
+
+const DRUM_ORDER: ReadonlyArray<{ kind: DrumKind; label: string }> = [
+  { kind: "kick",  label: "Kick"  },
+  { kind: "snare", label: "Snare" },
+  { kind: "hat",   label: "Hat"   },
+  { kind: "clap",  label: "Clap"  },
 ];
 
-type VoiceType = "sine" | "triangle" | "square";
-const VOICES: ReadonlyArray<{ value: VoiceType; label: string; hint: string }> = [
-  { value: "sine",     label: "Sine",     hint: "맑은 풍경" },
-  { value: "triangle", label: "Triangle", hint: "둥근 음" },
-  { value: "square",   label: "Square",   hint: "단단한 합성" },
+const OSC_OPTIONS: ReadonlyArray<{ value: MelodyOsc; label: string }> = [
+  { value: "sine",     label: "Sine"     },
+  { value: "triangle", label: "Triangle" },
+  { value: "square",   label: "Square"   },
 ];
 
-const ROWS              = PENTATONIC.length;       // 5
-const COLS              = 16;                      // 16th-note grid
-const VOL_MAX           = 0.5;                     // hearing-safety cap
-const LOOKAHEAD_MS      = 25;                      // scheduler tick
-const SCHEDULE_AHEAD_S  = 0.1;                     // schedule horizon
-const NOTE_RELEASE_S    = 0.22;                    // per-note envelope length
+type Pattern = boolean[][];
 
-type Grid = boolean[][];
-
-function emptyGrid(): Grid {
-  return Array.from({ length: ROWS }, () => Array<boolean>(COLS).fill(false));
+function emptyPattern(rows: number, cols = COLS): Pattern {
+  return Array.from({ length: rows }, () => Array<boolean>(cols).fill(false));
 }
 
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 export default function Sequencer() {
   // -------------------------------------------------------------------------
-  // State
+  // Scale + per-track row sets (row count depends on scale)
   // -------------------------------------------------------------------------
-  const [grid,     setGrid]     = useState<Grid>(emptyGrid);
-  const [playing,  setPlaying]  = useState(false);
-  const [step,     setStep]     = useState(-1);
-  const [bpm,      setBpm]      = useState(120);
-  const [voice,    setVoice]    = useState<VoiceType>("sine");
-  const [volume,   setVolume]   = useState(0.35);
+  const [scaleId, setScaleId] = useState<Scale["id"]>("pentatonic");
+  const scale = useMemo(() => SCALES.find((s) => s.id === scaleId)!, [scaleId]);
+  const bassRows   = useMemo(() => buildScaleRows(scale, BASS_ROOT_MIDI, BASS_OCTAVES), [scale]);
+  const melodyRows = useMemo(() => buildScaleRows(scale, MELODY_ROOT_MIDI, MELODY_OCTAVES), [scale]);
 
-  // Refs the scheduler (closure-bound) reads instead of capturing stale state.
-  const gridRef    = useRef(grid);     gridRef.current  = grid;
-  const voiceRef   = useRef(voice);    voiceRef.current = voice;
-  const bpmRef     = useRef(bpm);      bpmRef.current   = bpm;
+  // -------------------------------------------------------------------------
+  // Track patterns
+  // -------------------------------------------------------------------------
+  const [drums,  setDrums]  = useState<Pattern>(() => emptyPattern(DRUM_ORDER.length));
+  const [bass,   setBass]   = useState<Pattern>(() => emptyPattern(bassRows.length));
+  const [melody, setMelody] = useState<Pattern>(() => emptyPattern(melodyRows.length));
 
-  // Audio + scheduler state.
+  // When scale changes, re-allocate bass / melody patterns to match the
+  // new row count. We don't try to preserve note positions across scale
+  // swaps because semantics differ (pentatonic row 2 ≠ major row 2).
+  useEffect(() => {
+    setBass(emptyPattern(bassRows.length));
+    setMelody(emptyPattern(melodyRows.length));
+  }, [scaleId, bassRows.length, melodyRows.length]);
+
+  // -------------------------------------------------------------------------
+  // Mixer + master controls
+  // -------------------------------------------------------------------------
+  const [drumsVol,   setDrumsVol]   = useState(0.85);
+  const [bassVol,    setBassVol]    = useState(0.75);
+  const [melodyVol,  setMelodyVol]  = useState(0.65);
+  const [drumsMute,  setDrumsMute]  = useState(false);
+  const [bassMute,   setBassMute]   = useState(false);
+  const [melodyMute, setMelodyMute] = useState(false);
+  const [melodyOsc,  setMelodyOsc]  = useState<MelodyOsc>("triangle");
+
+  const [bpm,        setBpm]        = useState(108);
+  const [masterVol,  setMasterVol]  = useState(0.5);
+
+  // Transport
+  const [playing, setPlaying] = useState(false);
+  const [step,    setStep]    = useState(-1);
+
+  // -------------------------------------------------------------------------
+  // Scheduler refs (closures read latest state through these)
+  // -------------------------------------------------------------------------
+  const drumsRef       = useRef(drums);   drumsRef.current  = drums;
+  const bassRef        = useRef(bass);    bassRef.current   = bass;
+  const melodyRef      = useRef(melody);  melodyRef.current = melody;
+  const bassRowsRef    = useRef(bassRows);   bassRowsRef.current   = bassRows;
+  const melodyRowsRef  = useRef(melodyRows); melodyRowsRef.current = melodyRows;
+  const oscRef         = useRef(melodyOsc); oscRef.current = melodyOsc;
+  const bpmRef         = useRef(bpm);     bpmRef.current = bpm;
+
+  // -------------------------------------------------------------------------
+  // Audio graph
+  //   source(s) → trackGain(perTrack) → trackBus → master → destination
+  // Each track has its own bus so mute/volume mixer changes are clean.
+  // -------------------------------------------------------------------------
   const ctxRef        = useRef<AudioContext | null>(null);
   const masterGainRef = useRef<GainNode | null>(null);
+  const drumsBusRef   = useRef<GainNode | null>(null);
+  const bassBusRef    = useRef<GainNode | null>(null);
+  const melodyBusRef  = useRef<GainNode | null>(null);
+
   const stepRef       = useRef(0);
   const nextNoteTime  = useRef(0);
   const timerRef      = useRef<number | null>(null);
 
-  // -------------------------------------------------------------------------
-  // Audio engine
-  // -------------------------------------------------------------------------
   const ensureContext = useCallback((): AudioContext => {
     if (ctxRef.current) return ctxRef.current;
     const Ctor =
@@ -68,62 +124,94 @@ export default function Sequencer() {
           .webkitAudioContext) as typeof AudioContext;
     const ctx = new Ctor();
     const master = ctx.createGain();
-    master.gain.value = volume * VOL_MAX;
+    master.gain.value = masterVol * VOL_MAX;
     master.connect(ctx.destination);
+    const drumsBus  = ctx.createGain();
+    drumsBus.gain.value = drumsMute ? 0 : drumsVol;
+    drumsBus.connect(master);
+    const bassBus   = ctx.createGain();
+    bassBus.gain.value = bassMute ? 0 : bassVol;
+    bassBus.connect(master);
+    const melodyBus = ctx.createGain();
+    melodyBus.gain.value = melodyMute ? 0 : melodyVol;
+    melodyBus.connect(master);
+
     ctxRef.current = ctx;
     masterGainRef.current = master;
+    drumsBusRef.current = drumsBus;
+    bassBusRef.current  = bassBus;
+    melodyBusRef.current = melodyBus;
     return ctx;
-  }, [volume]);
+  }, [masterVol, drumsMute, drumsVol, bassMute, bassVol, melodyMute, melodyVol]);
 
-  const playNote = useCallback((freq: number, time: number, voiceType: VoiceType) => {
-    const ctx = ctxRef.current;
-    const master = masterGainRef.current;
-    if (!ctx || !master) return;
+  // Keep bus gains in sync with mixer state.
+  useEffect(() => {
+    const bus = drumsBusRef.current; const ctx = ctxRef.current;
+    if (!bus || !ctx) return;
+    bus.gain.linearRampToValueAtTime(drumsMute ? 0 : drumsVol, ctx.currentTime + 0.04);
+  }, [drumsVol, drumsMute]);
+  useEffect(() => {
+    const bus = bassBusRef.current; const ctx = ctxRef.current;
+    if (!bus || !ctx) return;
+    bus.gain.linearRampToValueAtTime(bassMute ? 0 : bassVol, ctx.currentTime + 0.04);
+  }, [bassVol, bassMute]);
+  useEffect(() => {
+    const bus = melodyBusRef.current; const ctx = ctxRef.current;
+    if (!bus || !ctx) return;
+    bus.gain.linearRampToValueAtTime(melodyMute ? 0 : melodyVol, ctx.currentTime + 0.04);
+  }, [melodyVol, melodyMute]);
+  useEffect(() => {
+    const m = masterGainRef.current; const ctx = ctxRef.current;
+    if (!m || !ctx) return;
+    m.gain.linearRampToValueAtTime(masterVol * VOL_MAX, ctx.currentTime + 0.04);
+  }, [masterVol]);
 
-    const osc = ctx.createOscillator();
-    osc.type = voiceType;
-    osc.frequency.value = freq;
-
-    const env = ctx.createGain();
-    // 5 ms attack, exponential release. Gain stays well below 1 so combined
-    // notes don't clip even when several rows fire simultaneously.
-    env.gain.setValueAtTime(0, time);
-    env.gain.linearRampToValueAtTime(0.55, time + 0.005);
-    env.gain.exponentialRampToValueAtTime(0.001, time + NOTE_RELEASE_S);
-
-    osc.connect(env);
-    env.connect(master);
-    osc.start(time);
-    osc.stop(time + NOTE_RELEASE_S + 0.02);
-  }, []);
-
+  // -------------------------------------------------------------------------
+  // Scheduler
+  // -------------------------------------------------------------------------
   const scheduleStep = useCallback((stepIdx: number, time: number) => {
-    const g = gridRef.current;
-    const v = voiceRef.current;
-    for (let row = 0; row < ROWS; ++row) {
-      if (g[row][stepIdx]) playNote(PENTATONIC[row].freq, time, v);
+    const ctx = ctxRef.current;
+    if (!ctx) return;
+    // Drums
+    const dPat = drumsRef.current;
+    DRUM_ORDER.forEach(({ kind }, row) => {
+      if (dPat[row]?.[stepIdx]) {
+        playDrum(kind, ctx, time, drumsBusRef.current!);
+      }
+    });
+    // Bass — monophonic (top row wins), prevents low-end mud
+    const bPat = bassRef.current;
+    const bRows = bassRowsRef.current;
+    for (let row = 0; row < bPat.length; ++row) {
+      if (bPat[row][stepIdx]) {
+        playBass(ctx, time, bRows[row].freq, bassBusRef.current!);
+        break;
+      }
     }
-  }, [playNote]);
+    // Melody — polyphonic, all hits at this step
+    const mPat = melodyRef.current;
+    const mRows = melodyRowsRef.current;
+    const osc = oscRef.current;
+    for (let row = 0; row < mPat.length; ++row) {
+      if (mPat[row][stepIdx]) {
+        playMelody(ctx, time, mRows[row].freq, melodyBusRef.current!, osc);
+      }
+    }
+  }, []);
 
   const scheduler = useCallback(() => {
     const ctx = ctxRef.current;
     if (!ctx) return;
-
     while (nextNoteTime.current < ctx.currentTime + SCHEDULE_AHEAD_S) {
       const t = nextNoteTime.current;
       const s = stepRef.current;
       scheduleStep(s, t);
-
-      // Light up the UI step right when audio fires.
       const delayMs = Math.max(0, (t - ctx.currentTime) * 1000);
       window.setTimeout(() => setStep(s), delayMs);
-
-      // Advance.
-      const secondsPerStep = 60.0 / bpmRef.current / 4; // 16th notes
+      const secondsPerStep = 60.0 / bpmRef.current / 4;
       nextNoteTime.current += secondsPerStep;
       stepRef.current = (stepRef.current + 1) % COLS;
     }
-
     timerRef.current = window.setTimeout(scheduler, LOOKAHEAD_MS);
   }, [scheduleStep]);
 
@@ -145,15 +233,7 @@ export default function Sequencer() {
     setStep(-1);
   }, []);
 
-  // Volume → master gain ramp (avoids clicks).
-  useEffect(() => {
-    const gain = masterGainRef.current;
-    const ctx = ctxRef.current;
-    if (!gain || !ctx) return;
-    gain.gain.linearRampToValueAtTime(volume * VOL_MAX, ctx.currentTime + 0.05);
-  }, [volume]);
-
-  // Cleanup on unmount.
+  // Cleanup
   useEffect(() => {
     return () => {
       if (timerRef.current !== null) window.clearTimeout(timerRef.current);
@@ -162,105 +242,125 @@ export default function Sequencer() {
   }, []);
 
   // -------------------------------------------------------------------------
-  // Grid edits
+  // Edits
   // -------------------------------------------------------------------------
-  const toggleCell = useCallback((row: number, col: number) => {
-    setGrid((g) =>
-      g.map((r, ri) => (ri === row ? r.map((c, ci) => (ci === col ? !c : c)) : r)),
-    );
-  }, []);
+  const toggle = useCallback(
+    (track: "drums" | "bass" | "melody", row: number, col: number) => {
+      const setter =
+        track === "drums" ? setDrums : track === "bass" ? setBass : setMelody;
+      setter((g) =>
+        g.map((r, ri) => (ri === row ? r.map((c, ci) => (ci === col ? !c : c)) : r)),
+      );
+    },
+    [],
+  );
 
-  const clearGrid = useCallback(() => {
-    setGrid(emptyGrid());
-  }, []);
+  const clearAll = useCallback(() => {
+    setDrums(emptyPattern(DRUM_ORDER.length));
+    setBass(emptyPattern(bassRows.length));
+    setMelody(emptyPattern(melodyRows.length));
+  }, [bassRows.length, melodyRows.length]);
 
   // -------------------------------------------------------------------------
-  // Render
+  // Render helpers
   // -------------------------------------------------------------------------
-  return (
-    <div className="mt-10 rounded-2xl border border-paper-deep bg-paper-soft p-4 md:p-6">
-      {/* Voice selector */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="font-mono text-xs tracking-widest text-ink-mute uppercase">Voice</span>
-        {VOICES.map((v) => {
-          const on = voice === v.value;
-          return (
-            <button
-              key={v.value}
-              type="button"
-              onClick={() => setVoice(v.value)}
-              className={
-                "relative rounded-md border px-3 py-1.5 text-xs transition-colors " +
-                (on
-                  ? "border-ink bg-ink text-paper"
-                  : "border-paper-deep bg-paper hover:border-ink text-ink")
-              }
-            >
-              {on && (
-                <span aria-hidden className="absolute top-1 right-1 w-1 h-1 rounded-full bg-injoo" />
-              )}
-              <span className="font-semibold">{v.label}</span>
-              <span className={"ml-2 " + (on ? "text-paper/70" : "text-ink-mute")}>{v.hint}</span>
-            </button>
-          );
-        })}
+  const renderTrack = (
+    title: string,
+    track: "drums" | "bass" | "melody",
+    pattern: Pattern,
+    rowLabels: string[],
+    mute: boolean,
+    setMute: (b: boolean) => void,
+    vol: number,
+    setVol: (v: number) => void,
+    extra?: React.ReactNode,
+  ) => (
+    <section
+      className={
+        "rounded-xl border bg-paper p-4 md:p-5 transition-colors " +
+        (mute ? "border-paper-deep opacity-70" : "border-paper-deep")
+      }
+    >
+      <div className="flex flex-wrap items-center gap-3 mb-3">
+        <h3 className="text-sm font-semibold tracking-tight text-ink">{title}</h3>
+        <button
+          type="button"
+          onClick={() => setMute(!mute)}
+          aria-pressed={mute}
+          className={
+            "rounded-md border px-2 py-0.5 text-[10px] font-mono tracking-widest uppercase transition-colors " +
+            (mute
+              ? "border-injoo bg-injoo text-paper"
+              : "border-paper-deep text-ink-soft hover:border-ink")
+          }
+        >
+          {mute ? "Muted" : "Mute"}
+        </button>
+        <label className="flex items-center gap-2 text-[10px] font-mono text-ink-mute uppercase">
+          Vol
+          <input
+            type="range" min={0} max={1} step={0.01}
+            value={vol}
+            onChange={(e) => setVol(Number(e.target.value))}
+            className="accent-ink w-24"
+            aria-label={`${title} volume`}
+            disabled={mute}
+          />
+          <span className="tabular w-8 text-right">{Math.round(vol * 100)}</span>
+        </label>
+        {extra}
       </div>
 
-      {/* Grid */}
-      <div className="mt-6 overflow-x-auto">
+      <div className="overflow-x-auto">
         <div
           className="grid gap-1 min-w-fit"
-          style={{ gridTemplateColumns: `auto repeat(${COLS}, 1.75rem)` }}
+          style={{ gridTemplateColumns: `auto repeat(${COLS}, 1.5rem)` }}
           role="grid"
-          aria-label="5음계 16-step sequencer"
+          aria-label={`${title} pattern`}
         >
-          {/* Column header row — beat numbers, current step in 인주 */}
+          {/* Header row: step numbers */}
           <span aria-hidden />
-          {Array.from({ length: COLS }, (_, c) => {
-            const onHead = playing && step === c;
-            return (
-              <span
-                key={`head-${c}`}
-                className={
-                  "text-[10px] font-mono text-center self-end pb-1 " +
-                  (onHead ? "text-injoo font-bold" : "text-ink-mute")
-                }
-                aria-hidden
-              >
-                {c + 1}
-              </span>
-            );
-          })}
+          {Array.from({ length: COLS }, (_, c) => (
+            <span
+              key={`${track}-h-${c}`}
+              className={
+                "text-[9px] font-mono text-center self-end pb-0.5 " +
+                (playing && step === c ? "text-injoo font-bold" : "text-ink-mute")
+              }
+              aria-hidden
+            >
+              {c + 1}
+            </span>
+          ))}
 
-          {/* Note rows */}
-          {PENTATONIC.map((note, row) => (
-            <Fragment key={`row-${row}`}>
-              <span className="text-sm font-mono text-ink-soft self-center pr-2 select-none">
-                {note.name}
+          {/* Pattern rows */}
+          {pattern.map((row, ri) => (
+            <Fragment key={`${track}-r-${ri}`}>
+              <span className="text-[11px] font-mono text-ink-soft self-center pr-2 select-none whitespace-nowrap">
+                {rowLabels[ri]}
               </span>
-              {Array.from({ length: COLS }, (_, col) => {
-                const active = grid[row][col];
-                const onHead = playing && step === col;
+              {row.map((on, ci) => {
+                const onHead = playing && step === ci;
                 return (
                   <button
-                    key={`cell-${row}-${col}`}
+                    key={`${track}-${ri}-${ci}`}
                     type="button"
                     role="gridcell"
-                    aria-label={`${note.name} ${col + 1}번 칸 ${active ? "켜짐" : "꺼짐"}`}
-                    aria-pressed={active}
-                    onClick={() => toggleCell(row, col)}
+                    aria-label={`${title} ${rowLabels[ri]} step ${ci + 1} ${on ? "on" : "off"}`}
+                    aria-pressed={on}
+                    onClick={() => toggle(track, ri, ci)}
                     className={
-                      "relative h-7 rounded transition-colors " +
-                      (active
+                      "relative h-6 rounded transition-colors " +
+                      (on
                         ? "bg-ink hover:bg-ink-soft"
                         : "bg-paper-deep hover:bg-ink/15") +
-                      (onHead ? " ring-2 ring-injoo ring-offset-1 ring-offset-paper-soft" : "")
+                      (onHead ? " ring-2 ring-injoo ring-offset-1 ring-offset-paper" : "")
                     }
                   >
-                    {active && (
+                    {on && (
                       <span
                         aria-hidden
-                        className="absolute top-1 right-1 w-1 h-1 rounded-full bg-injoo"
+                        className="absolute top-0.5 right-0.5 w-1 h-1 rounded-full bg-injoo"
                       />
                     )}
                   </button>
@@ -270,9 +370,16 @@ export default function Sequencer() {
           ))}
         </div>
       </div>
+    </section>
+  );
 
-      {/* Controls */}
-      <div className="mt-6 flex flex-wrap items-center gap-4">
+  // -------------------------------------------------------------------------
+  // Render
+  // -------------------------------------------------------------------------
+  return (
+    <div className="mt-10 rounded-2xl border border-paper-deep bg-paper-soft p-4 md:p-6">
+      {/* Master controls */}
+      <div className="flex flex-wrap items-center gap-4 mb-4">
         <button
           type="button"
           onClick={playing ? stop : start}
@@ -282,45 +389,103 @@ export default function Sequencer() {
         </button>
         <button
           type="button"
-          onClick={clearGrid}
+          onClick={clearAll}
           className="rounded-md border border-ink/20 px-4 py-2 text-sm hover:bg-ink hover:text-paper transition-colors"
         >
-          초기화
+          전체 초기화
         </button>
 
         <label className="flex items-center gap-3 text-sm text-ink-soft">
           <span className="font-mono text-xs tracking-widest text-ink-mute uppercase">BPM</span>
           <input
-            type="range"
-            min={60}
-            max={160}
-            step={1}
-            value={bpm}
-            onChange={(e) => setBpm(Number(e.target.value))}
-            className="accent-ink w-28"
-            aria-label="템포"
+            type="range" min={60} max={200} step={1}
+            value={bpm} onChange={(e) => setBpm(Number(e.target.value))}
+            className="accent-ink w-28" aria-label="템포"
           />
           <span className="tabular text-xs w-8 text-right">{bpm}</span>
         </label>
 
         <label className="flex items-center gap-3 text-sm text-ink-soft flex-1 min-w-[180px]">
-          <span className="font-mono text-xs tracking-widest text-ink-mute uppercase">Vol</span>
+          <span className="font-mono text-xs tracking-widest text-ink-mute uppercase">Master</span>
           <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.01}
-            value={volume}
-            onChange={(e) => setVolume(Number(e.target.value))}
-            className="flex-1 accent-ink"
-            aria-label="볼륨"
+            type="range" min={0} max={1} step={0.01}
+            value={masterVol} onChange={(e) => setMasterVol(Number(e.target.value))}
+            className="flex-1 accent-ink" aria-label="마스터 볼륨"
           />
-          <span className="tabular text-xs w-10 text-right">{Math.round(volume * 100)}%</span>
+          <span className="tabular text-xs w-10 text-right">{Math.round(masterVol * 100)}%</span>
         </label>
       </div>
 
+      {/* Scale picker */}
+      <div className="flex flex-wrap items-center gap-2 mb-6">
+        <span className="font-mono text-xs tracking-widest text-ink-mute uppercase">Scale</span>
+        {SCALES.map((s) => {
+          const on = scale.id === s.id;
+          return (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => setScaleId(s.id)}
+              className={
+                "relative rounded-md border px-3 py-1 text-xs transition-colors " +
+                (on
+                  ? "border-ink bg-ink text-paper"
+                  : "border-paper-deep bg-paper hover:border-ink text-ink")
+              }
+            >
+              {on && (
+                <span aria-hidden className="absolute top-1 right-1 w-1 h-1 rounded-full bg-injoo" />
+              )}
+              <span className="font-semibold">{s.label}</span>
+              <span className={"ml-2 " + (on ? "text-paper/70" : "text-ink-mute")}>{s.hint}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tracks */}
+      <div className="space-y-4">
+        {renderTrack(
+          "Drums", "drums", drums,
+          DRUM_ORDER.map((d) => d.label),
+          drumsMute, setDrumsMute, drumsVol, setDrumsVol,
+        )}
+        {renderTrack(
+          "Bass", "bass", bass,
+          bassRows.map((r) => r.label),
+          bassMute, setBassMute, bassVol, setBassVol,
+        )}
+        {renderTrack(
+          "Melody", "melody", melody,
+          melodyRows.map((r) => r.label),
+          melodyMute, setMelodyMute, melodyVol, setMelodyVol,
+          // Melody-only voice picker.
+          <div className="flex items-center gap-1.5">
+            {OSC_OPTIONS.map((o) => {
+              const on = melodyOsc === o.value;
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => setMelodyOsc(o.value)}
+                  className={
+                    "rounded-md border px-2 py-0.5 text-[10px] transition-colors " +
+                    (on
+                      ? "border-ink bg-ink text-paper"
+                      : "border-paper-deep text-ink-soft hover:border-ink")
+                  }
+                  aria-pressed={on}
+                >
+                  {o.label}
+                </button>
+              );
+            })}
+          </div>,
+        )}
+      </div>
+
       <p className="mt-4 text-xs text-ink-mute">
-        이어폰 사용 시 볼륨을 30% 이하로 시작하세요. 5음계라 어떤 칸을 눌러도 음악으로 떨어집니다 — 비전공자도 부담 없이 그려보세요.
+        세 트랙(드럼·베이스·멜로디)이 한 박자 위에서 함께 움직입니다. 스케일을 바꾸면 베이스·멜로디 행이 자동으로 재구성됩니다. 출력은 안전을 위해 50%로 제한.
       </p>
     </div>
   );

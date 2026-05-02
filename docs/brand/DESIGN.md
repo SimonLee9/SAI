@@ -213,7 +213,7 @@ CSS 변수로 정의되며, `:root` (라이트)와 `:root.dark` (다크)에서 �
 | `/features` | Features | 4 features 카드 |
 | `/product` | Product | Showcase + spec |
 | `/lab` | Sound Lab | 6 프리셋 신호 시험기 |
-| `/studio` | Studio | 5음계 16-step sequencer |
+| `/studio` | Studio | 멀티트랙 16-step 시퀀서 (Drums + Bass + Melody, 스케일 선택) |
 | `/tuner` | Tuner | 5밴드 비주얼 EQ (drag-on-curve) |
 | `/faq` | FAQ | 자주 묻는 질문 |
 
