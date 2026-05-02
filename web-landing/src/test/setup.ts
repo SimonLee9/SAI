@@ -11,15 +11,35 @@ beforeEach(() => {
   // visualizer effect runs cleanly under tests.
   HTMLCanvasElement.prototype.getContext = (function () {
     return {
-      clearRect:  () => {},
-      beginPath:  () => {},
-      moveTo:     () => {},
-      arcTo:      () => {},
-      closePath:  () => {},
-      fill:       () => {},
-      fillStyle:  "",
+      // 2D context surface — every method used by our components stubbed.
+      clearRect:           () => {},
+      beginPath:            () => {},
+      moveTo:               () => {},
+      lineTo:               () => {},
+      arcTo:                () => {},
+      closePath:            () => {},
+      fill:                 () => {},
+      stroke:               () => {},
+      createLinearGradient: () => ({ addColorStop: () => {} }),
+      fillStyle:            "",
+      strokeStyle:          "",
+      lineWidth:            1,
+      lineCap:              "butt",
+      lineJoin:             "miter",
     };
   }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+
+  // jsdom doesn't ship ResizeObserver; stub with a no-op so components
+  // that observe layout don't crash. Tests don't depend on size callbacks.
+  if (typeof window.ResizeObserver === "undefined") {
+    class ResizeObserverStub {
+      observe()    { /* noop */ }
+      unobserve()  { /* noop */ }
+      disconnect() { /* noop */ }
+    }
+    (window as unknown as { ResizeObserver: typeof ResizeObserverStub }).ResizeObserver =
+      ResizeObserverStub;
+  }
 });
 
 afterEach(() => {

@@ -58,6 +58,14 @@ export interface MockAnalyserNode extends MockAudioNode {
   getByteFrequencyData: ReturnType<typeof vi.fn>;
 }
 
+export interface MockBiquadFilterNode extends MockAudioNode {
+  type: BiquadFilterType;
+  frequency: MockAudioParam;
+  Q: MockAudioParam;
+  gain: MockAudioParam;
+  getFrequencyResponse: ReturnType<typeof vi.fn>;
+}
+
 export interface AudioRegistry {
   contexts: MockAudioContext[];
   nodes: MockAudioNode[];
@@ -186,6 +194,19 @@ export class MockAudioContext {
       smoothingTimeConstant: 0.8,
       frequencyBinCount: 1024,
       getByteFrequencyData: vi.fn(),
+    });
+  }
+
+  createBiquadFilter(): MockBiquadFilterNode {
+    return makeBaseNode<MockBiquadFilterNode>(this, "biquad-filter", {
+      type: "peaking",
+      frequency: makeAudioParam(1000),
+      Q: makeAudioParam(1),
+      gain: makeAudioParam(0),
+      // Real browsers fill magResponse / phaseResponse arrays with the
+      // filter's frequency response. For tests, we just leave them as-is
+      // (caller pre-allocates Float32Arrays initialised to zero).
+      getFrequencyResponse: vi.fn(),
     });
   }
 

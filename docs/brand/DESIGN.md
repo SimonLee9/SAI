@@ -213,12 +213,21 @@ CSS 변수로 정의되며, `:root` (라이트)와 `:root.dark` (다크)에서 �
 | `/features` | Features | 4 features 카드 |
 | `/product` | Product | Showcase + spec |
 | `/lab` | Sound Lab | 6 프리셋 신호 시험기 |
-| `/studio` | Studio | 5음계 16-step sequencer (Pentatonic Pattern Sketchpad) |
+| `/studio` | Studio | 5음계 16-step sequencer |
+| `/tuner` | Tuner | 5밴드 비주얼 EQ (drag-on-curve) |
 | `/faq` | FAQ | 자주 묻는 질문 |
 
 각 페이지 하단에는 항상 `<Waitlist />` (전환 surface). Footer는 layout 차원에서 모든 페이지에 표시.
 
-**Sound Lab vs Studio**: 둘 다 스피커를 시험하는 자리지만 입력이 다르다. Sound Lab은 신호(주파수 톤·스윕·노이즈)로 *측정 도구*, Studio는 음악(멜로디·리듬·하모니)으로 *청취 도구*. 함께 쓰면 신호-수준과 음악-수준 양쪽에서 스피커를 평가할 수 있다.
+**3개 audio 도구의 분담**: 모두 스피커를 다루지만 역할이 다르다.
+
+| 페이지 | 행위 | 입력 → 출력 |
+|---|---|---|
+| Sound Lab | **측정** | 신호(톤·스윕·노이즈) → 들어보기 |
+| Studio    | **연주** | 그리드 패턴 → 5음계 음악 |
+| Tuner     | **조형** | 음원 + EQ 곡선 → 결을 깎은 출력 |
+
+세 페이지가 함께 있어 "스피커가 어떤 신호를 통과시키나"(Lab), "스피커가 어떤 음악을 만들 수 있나"(Studio), "스피커의 결을 어떻게 깎을 것인가"(Tuner) — 측정·연주·조형 세 각도에서 제품을 평가할 수 있다. 향후 Phase 3 web-dashboard에서 Tuner는 실 디바이스의 EQ를 직접 컨트롤하는 인터페이스로 재사용될 계획.
 
 ### 6.2 사이드바 (`<Sidebar />`)
 
