@@ -10,10 +10,15 @@ export default function SoundLab() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [volume,   setVolume]   = useState(0.35);
 
-  const ctxRef        = useRef<AudioContext | null>(null);
-  const gainRef       = useRef<GainNode | null>(null);
-  const analyserRef   = useRef<AnalyserNode | null>(null);
-  const sourceRef     = useRef<AudioScheduledSourceNode | null>(null);
+  const ctxRef         = useRef<AudioContext | null>(null);
+  const gainRef        = useRef<GainNode | null>(null);
+  const analyserRef    = useRef<AnalyserNode | null>(null);
+  const sourceRef      = useRef<AudioScheduledSourceNode | null>(null);
+  // Per-source gain so we can silence the current preset *immediately* on
+  // stop, regardless of how (or when) the source's own .stop()/.disconnect()
+  // takes effect. Without this, looping pink-noise BufferSources have been
+  // observed to bleed into the next preset on Chromium/WebKit.
+  const sourceGainRef  = useRef<GainNode | null>(null);
 
   const canvasRef     = useRef<HTMLCanvasElement | null>(null);
   const rafRef        = useRef<number | null>(null);
@@ -41,10 +46,26 @@ export default function SoundLab() {
   }, [volume]);
 
   const stopSource = useCallback(() => {
+    // 1) Hard-mute via the per-source gain — this is the audible silence
+    //    guarantee, decoupled from the source node's stop semantics.
+    const sgain = sourceGainRef.current;
+    if (sgain) {
+      try {
+        const t = sgain.context.currentTime;
+        sgain.gain.cancelScheduledValues(t);
+        sgain.gain.setValueAtTime(0, t);
+      } catch { /* context closed */ }
+    }
+    // 2) Then stop and detach the source itself.
     if (sourceRef.current) {
       try { sourceRef.current.stop(); } catch { /* already stopped */ }
       try { sourceRef.current.disconnect(); } catch { /* already disconnected */ }
       sourceRef.current = null;
+    }
+    // 3) Detach the gain too.
+    if (sgain) {
+      try { sgain.disconnect(); } catch { /* already disconnected */ }
+      sourceGainRef.current = null;
     }
   }, []);
 
@@ -53,11 +74,18 @@ export default function SoundLab() {
     if (ctx.state === "suspended") void ctx.resume();
     stopSource();
 
+    // Fresh per-source gain wired into the master chain.
+    //   [source] → [sgain] → [masterGain] → [analyser] → [destination]
+    const sgain = ctx.createGain();
+    sgain.gain.setValueAtTime(1.0, ctx.currentTime);
+    sgain.connect(gainRef.current!);
+    sourceGainRef.current = sgain;
+
     if (preset.kind === "tone") {
       const osc = ctx.createOscillator();
       osc.type = "sine";
       osc.frequency.value = preset.freq!;
-      osc.connect(gainRef.current!);
+      osc.connect(sgain);
       osc.start();
       sourceRef.current = osc;
     } else if (preset.kind === "sweep") {
@@ -68,12 +96,20 @@ export default function SoundLab() {
       osc.frequency.setValueAtTime(preset.fromHz!, t0);
       // exponentialRamp can't pass through 0; both endpoints are positive.
       osc.frequency.exponentialRampToValueAtTime(preset.toHz!, t1);
-      osc.connect(gainRef.current!);
+      osc.connect(sgain);
       osc.start(t0);
       osc.stop(t1);
       osc.onended = () => {
-        sourceRef.current = null;
-        setActiveId(null);
+        // Self-clean only if we're still the active source (defends against
+        // a faster click landing before this onended fires).
+        if (sourceRef.current === osc) {
+          sourceRef.current = null;
+          if (sourceGainRef.current === sgain) {
+            try { sgain.disconnect(); } catch { /* already disconnected */ }
+            sourceGainRef.current = null;
+          }
+          setActiveId(null);
+        }
       };
       sourceRef.current = osc;
     } else if (preset.kind === "noise") {
@@ -81,7 +117,7 @@ export default function SoundLab() {
       const src = ctx.createBufferSource();
       src.buffer = buf;
       src.loop = true;
-      src.connect(gainRef.current!);
+      src.connect(sgain);
       src.start();
       sourceRef.current = src;
     }
