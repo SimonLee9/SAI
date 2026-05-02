@@ -101,6 +101,16 @@ function generateSweepBuffer(ctx: AudioContext, durationSec: number): AudioBuffe
     const phase = 2 * Math.PI * fStart * (Math.pow(k, t) - 1) / lnK;
     data[i] = Math.sin(phase) * 0.5;
   }
+  // 5 ms fade-in/out at the buffer ends. Without this the looped sweep
+  // pops audibly each iteration: the buffer ends at 20 kHz amplitude and
+  // restarts instantly at 20 Hz amplitude — a hard discontinuity.
+  // Fading both ends to silence makes the loop boundary inaudible.
+  const fadeSamples = Math.min(Math.floor(0.005 * sr), Math.floor(n / 2));
+  for (let i = 0; i < fadeSamples; ++i) {
+    const k = i / fadeSamples;
+    data[i]         *= k;
+    data[n - 1 - i] *= k;
+  }
   return buf;
 }
 
@@ -123,12 +133,23 @@ export default function Tuner() {
 
   // -------------------------------------------------------------------------
   // Audio graph
+  //
+  // Routing:
+  //   source → [sourceGain] → filter[0] → ... → filter[4] → analyser → master → destination
+  //
+  // - sourceGain mutes the active source instantly on stop / source-switch
+  //   so neither start-up transients nor stop clicks bleed into the chain
+  //   (same pattern that fixed Pink Noise persistence in SoundLab).
+  // - analyser sits BEFORE master so the visualization stays meaningful
+  //   even when the user has dropped volume to 0. Visual = "what the EQ
+  //   is doing", independent of how loud you've decided to listen.
   // -------------------------------------------------------------------------
   const ctxRef         = useRef<AudioContext | null>(null);
   const masterGainRef  = useRef<GainNode | null>(null);
   const analyserRef    = useRef<AnalyserNode | null>(null);
   const filtersRef     = useRef<BiquadFilterNode[]>([]);
   const sourceNodeRef  = useRef<AudioScheduledSourceNode | null>(null);
+  const sourceGainRef  = useRef<GainNode | null>(null);
   const pinkBufRef     = useRef<AudioBuffer | null>(null);
   const sweepBufRef    = useRef<AudioBuffer | null>(null);
 
@@ -170,9 +191,10 @@ export default function Tuner() {
     analyser.fftSize = ANALYSER_FFT;
     analyser.smoothingTimeConstant = 0.78;
 
-    filters[filters.length - 1].connect(master);
-    master.connect(analyser);
-    analyser.connect(ctx.destination);
+    // analyser before master gain — see routing comment above.
+    filters[filters.length - 1].connect(analyser);
+    analyser.connect(master);
+    master.connect(ctx.destination);
 
     ctxRef.current = ctx;
     masterGainRef.current = master;
@@ -207,10 +229,24 @@ export default function Tuner() {
   // Source playback
   // -------------------------------------------------------------------------
   const stopSource = useCallback(() => {
+    // Hard-mute via per-source gain first — the audible silence
+    // guarantee, decoupled from the source node's own .stop() timing.
+    const sgain = sourceGainRef.current;
+    if (sgain) {
+      try {
+        const t = sgain.context.currentTime;
+        sgain.gain.cancelScheduledValues(t);
+        sgain.gain.setValueAtTime(0, t);
+      } catch { /* context closed */ }
+    }
     if (sourceNodeRef.current) {
       try { sourceNodeRef.current.stop(); } catch { /* already stopped */ }
       try { sourceNodeRef.current.disconnect(); } catch { /* already disconnected */ }
       sourceNodeRef.current = null;
+    }
+    if (sgain) {
+      try { sgain.disconnect(); } catch { /* already disconnected */ }
+      sourceGainRef.current = null;
     }
   }, []);
 
@@ -218,6 +254,16 @@ export default function Tuner() {
     const ctx = ensureContext();
     if (ctx.state === "suspended") void ctx.resume();
     stopSource();
+
+    // Per-source gain inserted before the filter chain. Fades in over
+    // 8 ms instead of starting full-volume — kills the start-up click
+    // that an unfaded oscillator/buffer would otherwise produce.
+    const sgain = ctx.createGain();
+    const t0 = ctx.currentTime;
+    sgain.gain.setValueAtTime(0, t0);
+    sgain.gain.linearRampToValueAtTime(1.0, t0 + 0.008);
+    sgain.connect(filtersRef.current[0]);
+    sourceGainRef.current = sgain;
 
     let node: AudioScheduledSourceNode;
     if (kind === "ref") {
@@ -239,7 +285,7 @@ export default function Tuner() {
       node = src;
     }
 
-    node.connect(filtersRef.current[0]);
+    node.connect(sgain);
     node.start();
     sourceNodeRef.current = node;
   }, [ensureContext, stopSource]);
@@ -274,21 +320,9 @@ export default function Tuner() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
-  const [size, setSize] = useState({ w: 1, h: 1 });
-
-  // Track wrapper size for handle positioning.
-  useEffect(() => {
-    const el = wrapperRef.current;
-    if (!el) return;
-    const update = () => {
-      const r = el.getBoundingClientRect();
-      setSize({ w: r.width, h: r.height });
-    };
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
+  // Handle positions are CSS percentages of the wrapper, so we don't need
+  // to track wrapper pixel dimensions in JS — drag handlers call
+  // getBoundingClientRect() at the moment of each pointermove instead.
 
   // Persistent draw arrays (allocated once).
   // Float32Array<ArrayBuffer> explicitly — TS 5.8's stricter typed-array
@@ -401,7 +435,11 @@ export default function Tuner() {
         ctx2d.beginPath();
         for (let i = 0; i < RESPONSE_BINS; ++i) {
           let totalDB = 0;
-          for (let b = 0; b < fs.length; ++b) totalDB += 20 * Math.log10(mags[b][i] || 1e-9);
+          for (let b = 0; b < fs.length; ++b) {
+            // Math.max instead of `|| 1e-9` so NaN/negative magnitudes are
+            // also floored — log10 then can't return NaN/-Infinity.
+            totalDB += 20 * Math.log10(Math.max(1e-9, mags[b][i]));
+          }
           const x = freqToX(sampleFreqs[i], W);
           const y = gainToY(Math.max(GAIN_MIN, Math.min(GAIN_MAX, totalDB)), H);
           if (i === 0) ctx2d.moveTo(x, y);
@@ -569,8 +607,6 @@ export default function Tuner() {
           );
         })}
 
-        {/* Hidden size sentinel for ResizeObserver fallback */}
-        <span className="sr-only">{`${size.w}×${size.h}`}</span>
       </div>
 
       {/* Band info + Q sliders */}
