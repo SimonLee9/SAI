@@ -33,7 +33,7 @@ S.A.I (Spatial Acoustic Intelligence, "사이") — 3D 프린팅 기반 모듈�
 - 브랜치: `main` 트렁크 기반. 큰 작업만 feature 브랜치.
 - 커밋: Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:` ...). 예시는 `git log`.
 - 코드 스타일: 펌웨어는 Arduino-ESP32 (PlatformIO `framework = arduino`), Python은 PEP 8, 웹은 React 18 함수형 컴포넌트 + Tailwind v4 (`@theme` CSS 토큰). ESLint/Prettier는 추후 도입.
-- 브랜드 톤: 차분하고 단정한 한국어, 약간의 시적 여운. 색은 화선지/먹/단청/청자 팔레트 (web-landing의 `src/index.css` `@theme` 블록이 single source of truth).
+- 브랜드 톤·시각: 차분하고 단정한 한국어, 약간의 시적 여운. 시각 디자인의 단일 출처는 [docs/brand/DESIGN.md](docs/brand/DESIGN.md) — 한지·먹·인주 3색 + 5-tier 농담 + figure-ground 반전 다크 모드. 새 UI 작업 전에 §8 Acceptance Criteria 한 번 훑을 것.
 
 ## Current phase
 

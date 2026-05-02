@@ -39,20 +39,18 @@ S.A.I : Spatial Acoustic Intelligence
 
 ## Visual Identity
 
-### Color Palette
+> ⚠️ 이 섹션의 초기 팔레트(Celadon / Copper Gold / Signal Blue)는 **2026-05-02자로 폐기**되었습니다. 현재 시각 시스템은 한지·먹·인주 3색 + 5-tier 농담으로 재구성되었으며, 단일 출처는 [DESIGN.md](DESIGN.md). 새 작업물은 모두 그 문서를 기준으로 합니다.
 
-| Name | Hex | Usage |
-|------|-----|-------|
-| Ink Black | `#1A1A2E` | Primary text, backgrounds |
-| Hanji Warm | `#F5F0E8` | Light backgrounds |
-| Celadon | `#7BA88C` | Accent, CTAs |
-| Copper Gold | `#B8860B` | Premium highlights |
-| Signal Blue | `#4A90D9` | Links, tech elements |
+핵심만 요약:
+
+- **3색**: 한지(paper) · 먹(ink) · 인주(injoo). 이외의 색은 production UI에서 사용 안 함.
+- **5-tier 농담**: 초묵 / 농묵 / 중묵 / 담묵 / 청묵. 위계는 색이 아니라 농담으로 만든다.
+- **인주 단일 강조**: 4곳 이내. 추가 시 기존 자리 하나를 뺀다.
+- **figure-ground 반전**: 라이트 = 한지 위 먹. 다크 = 먹 위 한지. 같은 붓 언어, 두 개의 종이.
 
 ### Typography
 
-- Headings: **Pretendard** (한/영 겸용) or **Inter**
-- Body: System sans-serif
+- Headings + Body: **Pretendard Variable** (한/영 겸용)
 - Code: JetBrains Mono
 
 ### Design Principles
@@ -60,6 +58,7 @@ S.A.I : Spatial Acoustic Intelligence
 1. **여백의 미** — 과도한 장식 배제, 공간을 살림
 2. **기술의 은닉** — 복잡한 기술은 겉으로 드러나지 않게
 3. **한국적 곡선** — 달항아리, 창살 문양 등의 모티프 활용
+4. **단 한 점의 색** — 인주가 그 한 점의 자리를 차지한다 (DESIGN.md §2.3)
 
 ## Content Pillars
 
