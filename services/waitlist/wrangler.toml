@@ -1,0 +1,28 @@
+name = "sai-waitlist"
+main = "src/index.ts"
+compatibility_date = "2026-05-01"
+
+# Default vars used when running locally with `wrangler dev`. Production /
+# preview values should be overridden in the Cloudflare dashboard or via
+# environment-specific [env.production] blocks below.
+[vars]
+ALLOWED_ORIGIN = "http://localhost:5174"
+
+# KV namespace for waitlist entries.
+# Create once with:    npx wrangler kv namespace create WAITLIST_KV
+# Then paste the returned `id` (and `preview_id` for `wrangler dev`) below.
+[[kv_namespaces]]
+binding    = "WAITLIST_KV"
+id         = "REPLACE_WITH_PRODUCTION_KV_ID"
+preview_id = "REPLACE_WITH_PREVIEW_KV_ID"
+
+# Production environment — locked CORS origin.
+[env.production]
+name = "sai-waitlist"
+
+  [env.production.vars]
+  ALLOWED_ORIGIN = "https://sai.example.com"   # ← replace with the live landing origin
+
+  [[env.production.kv_namespaces]]
+  binding = "WAITLIST_KV"
+  id      = "REPLACE_WITH_PRODUCTION_KV_ID"
