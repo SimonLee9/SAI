@@ -1,33 +1,36 @@
 type Variant = "underline" | "divider";
-type Quality = "wet" | "dry";
+type Quality = "wet" | "dry" | "najeon";
 
 type Props = {
   variant?: Variant;
   /**
    * Brush quality:
-   *   wet — 번짐 (bleeding). Smooth tapered stroke + soft halo. Default.
-   *         Atmospheric, secondary emphasis.
-   *   dry — 갈필 (parched). Broken stroke with irregular gaps. No halo.
-   *         Direct, demanding emphasis.
+   *   wet    — 번짐. Smooth tapered stroke + soft halo. Atmospheric.
+   *   dry    — 갈필. Broken stroke with irregular gaps. Direct, demanding.
+   *   najeon — 자개. Smooth stroke filled with iridescent mother-of-pearl
+   *            gradient. Material, not colour — used to mark precision
+   *            and craft (current default for section underlines).
    */
   quality?: Quality;
   className?: string;
   /** Override stroke opacity. Default: 0.85 (underline) / 0.7 (divider). */
   opacity?: number;
   /** Unique id suffix when multiple BrushStrokes appear on one page; lets
-   *  each instance own its own filter without collisions. */
+   *  each instance own its own filter / gradient without collisions. */
   idSuffix?: string;
 };
 
 /**
- * Single 붓 자국 SVG. Color inherits from `currentColor` so it tracks the
- * theme automatically (먹 in light mode, 한지 in dark mode).
+ * Single 붓 자국 SVG.
  *
- * Shape philosophy:
- *   - Tapered ends (round linecap) = brush touch-down and lift-off.
- *   - Slight vertical wobble along the path = organic, not mechanical.
- *   - Wet variant adds a faint echo path with blur = 번짐 (ink bleed).
- *   - Dry variant uses irregular dasharray = 갈필 (broken brush).
+ * For ink (wet/dry), colour inherits from `currentColor` so it tracks the
+ * page theme automatically — 먹 in light, 한지 in dark.
+ *
+ * For najeon (자개), the stroke is filled with a 5-stop linear gradient
+ * inspired by 나전칠기 mother-of-pearl inlay (sea-blue → mint → pearl →
+ * lavender → rose). The same gradient reads correctly on both cream and
+ * dark canvases because all stops are pearl-toned mid-saturations rather
+ * than primaries.
  */
 export default function BrushStroke({
   variant = "underline",
@@ -37,7 +40,9 @@ export default function BrushStroke({
   idSuffix = "",
 }: Props) {
   const isUnderline = variant === "underline";
-  const filterId = `bs-bleed-${variant}-${idSuffix || "default"}`;
+  const uid = idSuffix || "default";
+  const filterId = `bs-bleed-${variant}-${uid}`;
+  const najeonId = `bs-najeon-${variant}-${uid}`;
   const baseOpacity = opacity ?? (isUnderline ? 0.85 : 0.7);
 
   // Path geometry differs only in width; same wobble character.
@@ -61,13 +66,22 @@ export default function BrushStroke({
       className={className}
       aria-hidden
     >
-      {quality === "wet" && (
-        <defs>
+      <defs>
+        {quality === "wet" && (
           <filter id={filterId} x="-10%" y="-100%" width="120%" height="300%">
             <feGaussianBlur stdDeviation={isUnderline ? 0.45 : 0.6} />
           </filter>
-        </defs>
-      )}
+        )}
+        {quality === "najeon" && (
+          <linearGradient id={najeonId} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%"   stopColor="#6FB8D1" />
+            <stop offset="22%"  stopColor="#93C9B0" />
+            <stop offset="46%"  stopColor="#F4E0BC" />
+            <stop offset="72%"  stopColor="#C5A6CC" />
+            <stop offset="100%" stopColor="#DCA9B8" />
+          </linearGradient>
+        )}
+      </defs>
 
       {/* 번짐 halo — wet only. */}
       {quality === "wet" && (
@@ -82,11 +96,15 @@ export default function BrushStroke({
         />
       )}
 
-      {/* Main stroke. Dry variant breaks it up with an irregular dasharray. */}
+      {/* Main stroke. Stroke source depends on quality. */}
       <path
         d={path}
-        stroke="currentColor"
-        strokeWidth={isUnderline ? 1.3 : 1.2}
+        stroke={quality === "najeon" ? `url(#${najeonId})` : "currentColor"}
+        strokeWidth={
+          isUnderline
+            ? quality === "najeon" ? 1.6 : 1.3
+            : quality === "najeon" ? 1.5 : 1.2
+        }
         strokeLinecap="round"
         fill="none"
         opacity={baseOpacity}

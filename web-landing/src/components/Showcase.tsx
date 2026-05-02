@@ -54,7 +54,7 @@ export default function Showcase() {
         {/* Right: copy + spec table */}
         <div className="md:col-span-6">
           <p className="text-xs tracking-[0.3em] text-ink-soft uppercase">{showcase.caption}</p>
-          <BrushStroke className="mt-2 block w-12 h-[6px] text-ink-soft" />
+          <BrushStroke quality="najeon" idSuffix="showcase" className="mt-2 block w-12 h-[6px]" />
           <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight">{showcase.title}</h2>
           <p className="mt-6 text-ink-soft leading-relaxed">{showcase.body}</p>
 

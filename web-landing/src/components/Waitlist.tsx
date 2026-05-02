@@ -59,7 +59,7 @@ export default function Waitlist() {
     <section id="waitlist" className="py-24 md:py-32 border-b border-paper-deep">
       <div className="mx-auto max-w-2xl px-6 text-center">
         <p className="text-xs tracking-[0.3em] text-ink-soft uppercase">Notify Me</p>
-        <BrushStroke className="mt-2 inline-block w-12 h-[6px] text-ink-soft" />
+        <BrushStroke quality="najeon" idSuffix="waitlist" className="mt-2 inline-block w-12 h-[6px]" />
         <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight">
           가장 먼저 만나보세요
         </h2>

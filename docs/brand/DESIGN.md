@@ -66,6 +66,32 @@ CSS 변수로 정의되며, `:root` (라이트)와 `:root.dark` (다크)에서 �
 
 `amber` / `amber-deep` / `amber-soft` / `sage` / `sage-light`는 토큰 정의에는 남아 있으나 **production UI에서 사용 금지**. 향후 removal 후보. 새 코드에서 절대 참조하지 말 것.
 
+### 2.5 자개 (Najeon) — 재질, 색이 아님
+
+**중요**: 자개는 색 토큰이 아니라 **재질(material)**입니다. "단 한 점의 색(인주)" 원칙을 깨지 않으면서 흑백의 빈틈을 채우는 layer.
+
+자개는 5-stop 무지갯빛 linear gradient로 구현:
+
+| Stop | Hex | 비유 |
+|---|---|---|
+| 0%   | `#6FB8D1` | 청자 푸른빛 |
+| 22%  | `#93C9B0` | 박하 청록 |
+| 46%  | `#F4E0BC` | 진주 크림 |
+| 72%  | `#C5A6CC` | 라벤더 |
+| 100% | `#DCA9B8` | 장미 진주 |
+
+라이트·다크 모드 양쪽에서 동일 gradient 사용 — pearl 톤이라 어느 캔버스에도 어울림. 자개를 "색"으로 보지 않는 이유는 5색이 어우러져 **하나의 빛나는 표면**을 만들기 때문 — `currentColor`가 아닌 SVG `<linearGradient>`로 렌더.
+
+**3중 layer 구조**:
+
+| Layer | 역할 | 색 |
+|---|---|---|
+| 먹 (ink)    | 구조 — 글자, 형태 | 검정·크림 (mode 따라) |
+| 인주 (injoo) | 위계 — "이게 중요" | 인주 1색 |
+| 자개 (najeon) | 재질 — "정성 들인 자리" | gradient (재질) |
+
+각 layer가 다른 일을 하므로 충돌 없음.
+
 ---
 
 ## 3. 타이포그래피
@@ -128,18 +154,20 @@ CSS 변수로 정의되며, `:root` (라이트)와 `:root.dark` (다크)에서 �
 |---|---|---|
 | `variant` | `underline` | 짧은 stroke (48×6 viewBox) — 섹션 태그 라벨 아래 |
 | `variant` | `divider`   | 긴 stroke (240×8 viewBox) — 섹션 사이 부드러운 구분 |
-| `quality` | `wet` (기본) | 번짐 halo — 부드러운, 분위기 있는 강조 |
+| `quality` | `wet`       | 번짐 halo — 부드러운, 분위기 있는 강조 |
 | `quality` | `dry`       | 갈필 (irregular dasharray) — 단호한, 직접적인 강조 |
+| `quality` | `najeon`    | 자개 — 5-stop 무지갯빛 gradient 채움. **현재 production 기본값** |
 
 ### 5.2 사용 위치 (현재)
 
-모든 섹션 헤더의 태그 라벨 아래에 `wet underline` 1줄 (`Hero / Features / Showcase / SoundLab / Waitlist / About / FAQ`). Footer의 `EXPLORE` / `CONNECT` 라벨에도. Sidebar의 `사이` 라벨 아래에도.
+모든 섹션 헤더의 태그 라벨 아래에 `najeon underline` 1줄 (`Hero / Features / Showcase / SoundLab / Waitlist / About / FAQ`). Footer의 `EXPLORE` / `CONNECT` 라벨, Sidebar의 `사이` 라벨에도 동일 처리. 즉 페이지 모든 얇은 직선이 자개 무늬.
 
 ### 5.3 사용 가이드
 
-- 새 섹션을 추가할 때 태그 라벨 아래 `BrushStroke`을 함께 두는 것이 표준.
-- `dry` quality는 아직 production에 사용처 없음 — 더 단호한 강조가 필요한 자리(예: 경고, 핵심 deadline)에 도입 검토.
-- 색은 항상 `currentColor` — 부모의 `text-*` 클래스를 따라간다.
+- 새 섹션을 추가할 때 태그 라벨 아래 `<BrushStroke quality="najeon" idSuffix="..." />`을 동봉하는 것이 표준. `idSuffix`는 SVG gradient id 충돌 방지 (페이지 내 고유 문자열).
+- `wet` (currentColor) — 자개를 쓰기 부적절한 자리, 또는 의도적으로 잉크 느낌만 원할 때.
+- `dry` (갈필) — 아직 production에 사용처 없음. 더 단호한 강조가 필요한 자리(예: 경고, 핵심 deadline)에 도입 검토.
+- 자개 stroke은 `currentColor`를 무시하고 자체 gradient 사용 — 부모의 `text-*` 클래스는 영향 없음 (의도된 동작).
 
 ---
 
@@ -221,7 +249,7 @@ focus 상태도 인주 사용 안 함 — ink 농묵으로 충분.
 2. ✅ 명도/위계는 5-tier 농담 토큰으로 표현한다 (절대 임의 hex 사용 안 함).
 3. ✅ 인주 사용처는 §2.3의 4곳 외에는 추가 안 한다.
 4. ✅ 다크 모드에서 figure-ground가 의도대로 inversion 되는지 토글로 확인한다.
-5. ✅ 새 섹션의 태그 라벨에는 `<BrushStroke />` underline을 동봉한다.
+5. ✅ 새 섹션의 태그 라벨에는 `<BrushStroke quality="najeon" idSuffix="..." />` underline을 동봉한다 — `idSuffix`는 페이지 내 고유 문자열로.
 6. ✅ `prefers-reduced-motion` 사용자에게 큰 애니메이션을 강요하지 않는다.
 7. ✅ 한국어 본문은 차분한 voice를 유지 (느낌표·이모지 남용 금지).
 
@@ -237,6 +265,7 @@ focus 상태도 인주 사용 안 함 — ink 농묵으로 충분.
 - **번짐 (滲) / 갈필 (渴筆)** — 젖은 붓 / 마른 붓의 표현. `BrushStroke`의 두 quality.
 - **여백 (餘白)** — 빈 공간이 의미의 일부가 되는 구성. 충분한 padding과 max-width.
 - **인주 (印朱) / 낙관 (落款)** — 도장의 빨간색이 모노톤 그림에 단 하나의 색이 되는 전통. 우리 `injoo` 토큰.
+- **자개 (螺鈿) / 나전칠기 (螺鈿漆器)** — 옻칠한 검정 표면 위에 얇게 갈아 박은 진주층 조각의 무지갯빛. 고려 시대에 정점을 이룬 한국 공예. 우리 `najeon` brushstroke quality — 색이 아닌 재질로서, 얇은 직선 자리에 정성과 빛을 입힘.
 - **달항아리 (月壺)** — 비대칭의 비례, 단정한 곡선. Showcase 비주얼 모티프.
 
 이 참조는 **장식이 아니라 구조** — UI의 모든 결정이 이 어휘에서 파생된다.

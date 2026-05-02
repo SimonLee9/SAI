@@ -25,7 +25,7 @@ export default function Hero() {
           <p className="text-xs tracking-[0.3em] text-ink-soft uppercase">
             Spatial Acoustic Intelligence
           </p>
-          <BrushStroke className="mt-2 block w-12 h-[6px] text-ink-soft" />
+          <BrushStroke quality="najeon" idSuffix="hero" className="mt-2 block w-12 h-[6px]" />
           <h1 className="mt-4 text-4xl md:text-6xl font-extrabold leading-[1.1] tracking-tight text-ink-heavy">
             {brand.tagline}
           </h1>

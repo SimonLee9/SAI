@@ -28,7 +28,7 @@ export default function Sidebar() {
     >
       <nav className="px-5 py-8 font-mono text-sm overflow-y-auto h-full">
         <p className="text-xs tracking-[0.3em] text-ink-soft uppercase">사이</p>
-        <BrushStroke className="mt-1 block w-8 h-[5px] text-ink-soft" idSuffix="sb" />
+        <BrushStroke quality="najeon" idSuffix="sb" className="mt-1 block w-8 h-[5px]" />
 
         <ul className="mt-6 space-y-0.5">
           {NAV_ITEMS.map((item) => (

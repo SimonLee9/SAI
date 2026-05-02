@@ -21,7 +21,7 @@ export default function Footer() {
 
         <nav className="text-sm">
           <p className="text-xs tracking-widest text-paper/50">EXPLORE</p>
-          <BrushStroke className="mt-1 block w-10 h-[5px] text-paper/40" idSuffix="ftr-explore" />
+          <BrushStroke quality="najeon" idSuffix="ftr-explore" className="mt-1 block w-10 h-[5px]" />
           <ul className="mt-3 space-y-2">
             <li><a href="#features"  className="hover:text-paper transition-colors">Features</a></li>
             <li><a href="#showcase"  className="hover:text-paper transition-colors">Product</a></li>
@@ -32,7 +32,7 @@ export default function Footer() {
 
         <nav className="text-sm">
           <p className="text-xs tracking-widest text-paper/50">CONNECT</p>
-          <BrushStroke className="mt-1 block w-10 h-[5px] text-paper/40" idSuffix="ftr-connect" />
+          <BrushStroke quality="najeon" idSuffix="ftr-connect" className="mt-1 block w-10 h-[5px]" />
           <ul className="mt-3 space-y-2">
             <li>
               <a

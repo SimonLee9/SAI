@@ -242,7 +242,7 @@ export default function SoundLab() {
     <section id="lab" className="py-24 md:py-32 border-b border-paper-deep">
       <div className="mx-auto max-w-5xl px-6">
         <p className="text-xs tracking-[0.3em] text-ink-soft uppercase">Sound Lab</p>
-        <BrushStroke className="mt-2 block w-12 h-[6px] text-ink-soft" />
+        <BrushStroke quality="najeon" idSuffix="lab" className="mt-2 block w-12 h-[6px]" />
         <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight">
           음원별로, 사용하는 음역대가 다릅니다
         </h2>

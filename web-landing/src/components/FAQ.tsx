@@ -6,7 +6,7 @@ export default function FAQ() {
     <section id="faq" className="py-24 md:py-32 border-b border-paper-deep">
       <div className="mx-auto max-w-3xl px-6">
         <p className="text-xs tracking-[0.3em] text-ink-soft uppercase">FAQ</p>
-        <BrushStroke className="mt-2 block w-12 h-[6px] text-ink-soft" />
+        <BrushStroke quality="najeon" idSuffix="faq" className="mt-2 block w-12 h-[6px]" />
         <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight">자주 묻는 질문</h2>
 
         <div className="mt-10 divide-y divide-paper-deep border-y border-paper-deep">
