@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand palette — 화선지·먹·단청·청자 */
+  --color-paper:       #FAF7F2;
+  --color-paper-soft:  #F5F0E8;
+  --color-paper-deep:  #ECE5D9;
+  --color-ink:         #1A1814;
+  --color-ink-soft:    #4A453E;
+  --color-ink-mute:    #8A8278;
+  --color-amber:       #D97706;
+  --color-amber-deep:  #B45309;
+  --color-amber-soft:  #FCD9A8;
+  --color-sage:        #84A98C;
+  --color-sage-light:  #C8D9CC;
+
+  --font-sans: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+}
+
+html, body, #root {
+  height: 100%;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Smooth scroll for in-page anchors */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 4.5rem; /* clear sticky header */
+}
+
+/* Tabular numerals for spec readouts */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Demo bars idle pulse — used in hero gradient and footer */
+@keyframes idle-bar {
+  0%, 100% { transform: scaleY(0.25); opacity: 0.5; }
+  50%      { transform: scaleY(1);    opacity: 1;   }
+}

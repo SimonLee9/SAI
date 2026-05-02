@@ -41,7 +41,11 @@ S.A.I/
 │   ├── calibration/   # 룸 보정 필터 계수 생성
 │   └── neural/        # Neural 모델링 (Phase 3)
 │
-├── web-dashboard/     # 제어 웹 UI (React/TypeScript)
+├── web-landing/      # 브랜드/제품 랜딩 (React + Vite + Tailwind v4)
+│   ├── src/          # — Sound Lab 인터랙티브 데모 포함
+│   └── public/
+│
+├── web-dashboard/    # 제품 제어 웹 UI (Phase 3, 미부트스트랩)
 │   ├── src/
 │   └── public/
 │
@@ -92,7 +96,15 @@ pip install -r requirements.txt
 python analysis/sweep_generator.py   # 테스트 스윕 신호 생성
 ```
 
-### Quick Start — 웹 대시보드
+### Quick Start — 브랜드 랜딩 (Phase 0 활성)
+
+```bash
+cd web-landing
+npm install
+npm run dev              # http://localhost:5174
+```
+
+### Quick Start — 웹 대시보드 (Phase 3, 미부트스트랩)
 
 ```bash
 cd web-dashboard

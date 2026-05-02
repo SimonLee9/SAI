@@ -95,14 +95,25 @@ S.A.I는 ESP32-S3를 두뇌로 하는 블루투스 스피커이다. Phase 1은 �
 
 ---
 
-## 5. Web dashboard (`web-dashboard/`)
+## 5. Web surfaces
 
-**Phase 3** 시작. 마스터 펌웨어에 WebSocket 서버가 들어간 후 착수한다 ([web-dashboard/README.md](../../web-dashboard/README.md) 참조).
+레포는 두 개의 독립적인 웹 surface를 가진다:
 
-- **스택**: React + TypeScript + Vite, Tailwind CSS, WebSocket 통신.
-- **기능**: 노드 자동 탐색, 공간 맵 시각화, 룸 보정 위저드, 실시간 시각화, 음향/조명 프리셋, Matter/MQTT 브리지.
+### 5.1 `web-landing/` — 브랜드·제품 사이트 (Phase 0, 현재 활성)
 
-Phase 1·2 동안에는 `web-dashboard/`를 부트스트랩하지 않는다 (Phase 3 진입 시 `npm create vite@latest`로 스캐폴드).
+- **스택**: Vite 6 + React 18 + TypeScript 5 + Tailwind v4 (CSS-first, `@theme` 토큰).
+- **타이포**: Pretendard Variable (jsDelivr CDN), 한국어 본문/제목.
+- **섹션**: Header / Hero / Features / Showcase / SoundLab / Waitlist / About / FAQ / Footer.
+- **핵심 기능 — Sound Lab**: Web Audio API로 6개 프리셋(50 Hz / 100 Hz / 1 kHz / 10 kHz / 20 Hz→20 kHz 로그 스윕 / Voss-Kellet 핑크 노이즈)을 클라이언트에서 합성. `AnalyserNode` (fftSize=256)를 16 막대로 로그 스케일 그룹화하여, 실제 WS2812B 링의 시각화를 그대로 미러링. 출력은 `GainNode`로 `VOL_MAX = 0.5` 하드 캡 (청력 안전).
+- **사전 알림**: 이메일을 `localStorage`에만 보관 (`sai.waitlist.v1`). 백엔드는 사전 출시 단계에서 연결.
+- **자세한 사항**: [web-landing/README.md](../../web-landing/README.md).
+
+### 5.2 `web-dashboard/` — 제품 제어 UI (Phase 3)
+
+- 마스터 펌웨어에 WebSocket 서버가 들어간 후 착수.
+- **스택 (예정)**: React + TypeScript + Vite, Tailwind CSS, WebSocket.
+- **기능 (예정)**: 노드 자동 탐색, 공간 맵 시각화, 룸 보정 위저드, 실시간 스펙트럼, 음향/조명 프리셋, Matter/MQTT 브리지.
+- Phase 1·2 동안에는 부트스트랩하지 않는다.
 
 ---
 
