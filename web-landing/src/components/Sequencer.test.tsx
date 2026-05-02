@@ -91,4 +91,27 @@ describe("Sequencer (Studio 2.0) — multi-track state machine", () => {
     // 4 buses (master + drums + bass + melody) all get GainNodes.
     expect(audioRegistry.gains.length).toBeGreaterThanOrEqual(4);
   });
+
+  it("✨ 생성 button populates patterns and surfaces a preset label", async () => {
+    const user = userEvent.setup();
+    render(<Sequencer />);
+
+    // Initially every cell is off.
+    expect(
+      screen.getAllByRole("gridcell").filter((c) => c.getAttribute("aria-pressed") === "true"),
+    ).toHaveLength(0);
+
+    await user.click(screen.getByRole("button", { name: /생성/ }));
+
+    // Generator should leave at least drums + a few melody cells active.
+    const active = screen
+      .getAllByRole("gridcell")
+      .filter((c) => c.getAttribute("aria-pressed") === "true");
+    expect(active.length).toBeGreaterThan(5);
+
+    // The drum preset label appears next to the button.
+    expect(
+      screen.getByText(/Boom Bap|House|D&B|한국풍/),
+    ).toBeInTheDocument();
+  });
 });

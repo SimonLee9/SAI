@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { generatePattern } from "./studio/generators";
 import {
   buildScaleRows,
   SCALES,
@@ -259,6 +260,19 @@ export default function Sequencer() {
     setDrums(emptyPattern(DRUM_ORDER.length));
     setBass(emptyPattern(bassRows.length));
     setMelody(emptyPattern(melodyRows.length));
+    setLastGenLabel(null);
+  }, [bassRows.length, melodyRows.length]);
+
+  // Last generator preset label — small badge so the user knows what
+  // groove the algorithm picked.
+  const [lastGenLabel, setLastGenLabel] = useState<string | null>(null);
+
+  const generate = useCallback(() => {
+    const p = generatePattern(bassRows.length, melodyRows.length);
+    setDrums(p.drums);
+    setBass(p.bass);
+    setMelody(p.melody);
+    setLastGenLabel(p.drumLabel);
   }, [bassRows.length, melodyRows.length]);
 
   // -------------------------------------------------------------------------
@@ -387,6 +401,19 @@ export default function Sequencer() {
         >
           {playing ? "정지" : "재생"}
         </button>
+        <button
+          type="button"
+          onClick={generate}
+          className="relative rounded-md border border-ink bg-paper text-ink px-4 py-2 text-sm font-medium hover:bg-ink hover:text-paper transition-colors"
+        >
+          <span aria-hidden className="absolute top-1.5 right-1.5 w-1 h-1 rounded-full bg-injoo" />
+          ✨ 생성
+        </button>
+        {lastGenLabel && (
+          <span className="text-[10px] font-mono tracking-widest text-ink-mute uppercase">
+            {lastGenLabel}
+          </span>
+        )}
         <button
           type="button"
           onClick={clearAll}

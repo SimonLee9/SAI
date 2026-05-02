@@ -213,11 +213,13 @@ CSS 변수로 정의되며, `:root` (라이트)와 `:root.dark` (다크)에서 �
 | `/features` | Features | 4 features 카드 |
 | `/product` | Product | Showcase + spec |
 | `/lab` | Sound Lab | 6 프리셋 신호 시험기 |
-| `/studio` | Studio | 멀티트랙 16-step 시퀀서 (Drums + Bass + Melody, 스케일 선택) |
+| `/studio` | Studio | 멀티트랙 16-step 시퀀서 (Drums + Bass + Melody, 스케일 선택, ✨ 알고리즘 생성기) |
 | `/tuner` | Tuner | 5밴드 비주얼 EQ (drag-on-curve) |
 | `/faq` | FAQ | 자주 묻는 질문 |
 
 각 페이지 하단에는 항상 `<Waitlist />` (전환 surface). Footer는 layout 차원에서 모든 페이지에 표시.
+
+**Studio의 ✨ 생성 (algorithmic, not AI)**: Suno-class 음악 생성은 1인 프로젝트로 불가능 (수백억 자본 + ML팀 + GPU 클러스터 필요). 그리고 SAI는 스피커 회사지 음악 생성 회사가 아니라 정체성 정렬에도 어긋남. 대신 rule-based 알고리즘 생성기 — 4종 드럼 프리셋 (Boom Bap·House·D&B·한국풍) × 3종 베이스 그루브 × Markov 멜로디 walker — 가 한 클릭에 musical 시작 패턴을 생성. **AI 흉내가 아니라, AI보다 항상 coherent하고 즉시 편집 가능하다는 게 강점**. 향후 옵션으로 외부 API(MusicGen via Replicate 등) 통합 가능하지만 default UX는 끝까지 0-cost rule-based.
 
 **3개 audio 도구의 분담**: 모두 스피커를 다루지만 역할이 다르다.
 
