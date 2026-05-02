@@ -24,6 +24,17 @@
 #include "sai_bt.h"
 
 // ============================================
+// Bring-up state
+// ============================================
+static volatile uint32_t g_bt_samples_received = 0;
+
+static void on_bt_audio(const int16_t* /*samples*/, size_t count) {
+    // Phase 1 step (c): sink-only — count samples to confirm A2DP is decoding.
+    // Future: forward to sai_audio_write_samples + push to FFT for LED.
+    g_bt_samples_received += count;
+}
+
+// ============================================
 // Bring-up helpers (will be removed once BT audio is live)
 // ============================================
 static void play_test_tone(float freq_hz, uint32_t duration_ms) {
@@ -76,8 +87,11 @@ void setup() {
         Serial.println("[BOOT] I2S init FAILED — skipping test tone");
     }
 
-    // Phase 1 wiring (next commit):
-    // sai_bt_init("S.A.I", /*cb=*/nullptr);           // step c
+    if (sai_bt_init("S.A.I", on_bt_audio)) {
+        Serial.println("[BOOT] BT A2DP sink up — pair phone with 'S.A.I'");
+    } else {
+        Serial.println("[BOOT] BT init FAILED");
+    }
 
     Serial.println("[BOOT] System ready. Waiting for BT connection...");
 }
@@ -86,8 +100,16 @@ void setup() {
 // Main Loop
 // ============================================
 void loop() {
-    // TODO Phase 1: Audio-reactive LED update
-    // update_led_from_audio();
+    // 5-second status heartbeat.
+    static uint32_t last_log_ms = 0;
+    const uint32_t now = millis();
+    if (now - last_log_ms >= 5000) {
+        last_log_ms = now;
+        Serial.printf("[STAT] BT %s, samples=%lu\n",
+                      sai_bt_is_connected() ? "connected" : "idle",
+                      (unsigned long)g_bt_samples_received);
+    }
 
+    // TODO: drive sai_led_set_spectrum from on_bt_audio via FFT (sai_dsp).
     delay(10);
 }
