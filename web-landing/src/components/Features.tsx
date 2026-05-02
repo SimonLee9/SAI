@@ -5,7 +5,7 @@ export default function Features() {
     <section id="features" className="py-24 md:py-32 border-b border-paper-deep">
       <div className="mx-auto max-w-6xl px-6">
         <div className="max-w-2xl">
-          <p className="text-xs tracking-[0.3em] text-amber-deep uppercase">Features</p>
+          <p className="text-xs tracking-[0.3em] text-ink-soft uppercase">Features</p>
           <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight">
             소리·빛·형태·확장. 네 개의 결.
           </h2>
@@ -18,9 +18,9 @@ export default function Features() {
           {features.map((f) => (
             <article
               key={f.tag}
-              className="group rounded-xl bg-paper-soft border border-paper-deep p-6 hover:border-amber transition-colors"
+              className="group rounded-xl bg-paper-soft border border-paper-deep p-6 hover:border-ink transition-colors"
             >
-              <p className="text-xs font-mono tracking-widest text-amber-deep">{f.tag}</p>
+              <p className="text-xs font-mono tracking-widest text-ink-mute">{f.tag}</p>
               <h3 className="mt-3 text-lg font-semibold leading-snug">{f.title}</h3>
               <p className="mt-3 text-sm text-ink-soft leading-relaxed">{f.body}</p>
             </article>

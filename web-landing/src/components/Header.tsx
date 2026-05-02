@@ -1,4 +1,5 @@
 import Logo from "./Logo";
+import ThemeToggle from "./ThemeToggle";
 
 const NAV = [
   { href: "#features", label: "Features" },
@@ -10,8 +11,8 @@ const NAV = [
 export default function Header() {
   return (
     <header className="sticky top-0 z-50 backdrop-blur bg-paper/80 border-b border-paper-deep">
-      <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
-        <a href="#top" className="flex items-center gap-2 text-ink hover:text-amber transition-colors">
+      <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between gap-4">
+        <a href="#top" className="flex items-center gap-2 text-ink hover:text-ink-soft transition-colors">
           <Logo size={28} />
           <span className="font-bold tracking-wide">S.A.I</span>
           <span className="hidden sm:inline text-ink-mute text-sm">사이</span>
@@ -25,12 +26,15 @@ export default function Header() {
           ))}
         </nav>
 
-        <a
-          href="#waitlist"
-          className="rounded-md bg-ink text-paper px-4 py-2 text-sm font-medium hover:bg-amber-deep transition-colors"
-        >
-          알림 받기
-        </a>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <a
+            href="#waitlist"
+            className="rounded-md bg-ink text-paper px-4 py-2 text-sm font-medium hover:bg-ink-soft transition-colors"
+          >
+            알림 받기
+          </a>
+        </div>
       </div>
     </header>
   );

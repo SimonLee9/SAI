@@ -57,7 +57,7 @@ export default function Waitlist() {
   return (
     <section id="waitlist" className="py-24 md:py-32 border-b border-paper-deep">
       <div className="mx-auto max-w-2xl px-6 text-center">
-        <p className="text-xs tracking-[0.3em] text-amber-deep uppercase">Notify Me</p>
+        <p className="text-xs tracking-[0.3em] text-ink-soft uppercase">Notify Me</p>
         <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight">
           가장 먼저 만나보세요
         </h2>
@@ -73,22 +73,22 @@ export default function Waitlist() {
             value={email}
             onChange={(e) => { setEmail(e.target.value); if (state !== "idle" && state !== "submitting") setState("idle"); }}
             disabled={submitting}
-            className="flex-1 rounded-md border border-ink/20 bg-paper px-4 py-3 text-sm focus:outline-none focus:border-amber focus:ring-2 focus:ring-amber/30 transition disabled:opacity-60"
+            className="flex-1 rounded-md border border-ink/20 bg-paper text-ink px-4 py-3 text-sm focus:outline-none focus:border-ink focus:ring-2 focus:ring-ink/20 transition disabled:opacity-60"
             aria-invalid={state === "error"}
           />
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-md bg-ink text-paper px-6 py-3 text-sm font-medium hover:bg-amber-deep transition-colors disabled:opacity-60 disabled:cursor-wait"
+            className="rounded-md bg-ink text-paper px-6 py-3 text-sm font-medium hover:bg-ink-soft transition-colors disabled:opacity-60 disabled:cursor-wait"
           >
             {submitting ? "전송 중…" : "알림 신청"}
           </button>
         </form>
 
         <div className="mt-4 min-h-6 text-sm" aria-live="polite">
-          {state === "ok"       && <span className="text-sage">신청 완료. 출시 소식을 가장 먼저 보내드릴게요.</span>}
-          {state === "ok-local" && <span className="text-sage">신청 완료. 일시적으로 로컬에 저장되어, 잠시 후 다시 전송됩니다.</span>}
-          {state === "error"    && <span className="text-amber-deep">올바른 이메일 주소인지 확인해 주세요.</span>}
+          {state === "ok"       && <span className="text-ink">신청 완료. 출시 소식을 가장 먼저 보내드릴게요.</span>}
+          {state === "ok-local" && <span className="text-ink-soft">신청 완료. 일시적으로 로컬에 저장되어, 잠시 후 다시 전송됩니다.</span>}
+          {state === "error"    && <span className="text-ink-soft italic">올바른 이메일 주소인지 확인해 주세요.</span>}
         </div>
 
         <p className="mt-8 text-xs text-ink-mute">

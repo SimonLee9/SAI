@@ -137,7 +137,13 @@ export default function SoundLab() {
     gain.gain.linearRampToValueAtTime(volume * VOL_MAX, ctx.currentTime + 0.05);
   }, [volume]);
 
-  // Visualizer
+  // Visualizer — bars rendered in 농묵→담묵 (heavy ink → diluted ink)
+  // gradient. Bar colour reads --color-paper from the page so it tracks
+  // dark-mode swap automatically: bars are paper-cream on the ink stage
+  // in light mode, dark on the cream stage in dark mode. The gradient
+  // varies opacity from 1.0 at low frequencies (농묵) to ~0.45 at high
+  // (담묵) — the canvas bg behind shows through more, mimicking the
+  // way diluted ink lets the paper texture come through.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -153,6 +159,22 @@ export default function SoundLab() {
     resize();
     window.addEventListener("resize", resize);
 
+    // Cache the bar colour (parsed from --color-paper). Refreshed when
+    // the .dark class on <html> toggles, so theme switches are instant.
+    let barRGB: [number, number, number] = [255, 255, 255];
+    const refreshBarColour = () => {
+      const cssValue = getComputedStyle(document.documentElement)
+        .getPropertyValue("--color-paper")
+        .trim();
+      barRGB = parseColour(cssValue) ?? [255, 255, 255];
+    };
+    refreshBarColour();
+    const themeObserver = new MutationObserver(refreshBarColour);
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
     const freqData = new Uint8Array(ANALYSER_FFT / 2);
 
     const draw = () => {
@@ -161,26 +183,24 @@ export default function SoundLab() {
 
       const playing = activeIdRef.current !== null;
       const analyser = analyserRef.current;
-
-      if (playing && analyser) {
-        analyser.getByteFrequencyData(freqData);
-      }
+      if (playing && analyser) analyser.getByteFrequencyData(freqData);
 
       const gap = 4 * dpr;
       const barW = (W - gap * (BAR_COUNT - 1)) / BAR_COUNT;
       const totalBins = freqData.length;
+      const [r, g, b] = barRGB;
 
       for (let i = 0; i < BAR_COUNT; ++i) {
         let amp: number;
         if (playing && analyser) {
-          // Logarithmic grouping: more bars in low end.
+          // Logarithmic frequency grouping: more bars represent the low end.
           const lo = Math.floor(Math.pow(i / BAR_COUNT, 2) * totalBins);
           const hi = Math.max(lo + 1, Math.ceil(Math.pow((i + 1) / BAR_COUNT, 2) * totalBins));
           let sum = 0;
-          for (let b = lo; b < hi && b < totalBins; ++b) sum += freqData[b];
+          for (let bIdx = lo; bIdx < hi && bIdx < totalBins; ++bIdx) sum += freqData[bIdx];
           amp = Math.min(1, sum / (hi - lo) / 200);
         } else {
-          // Idle: gentle traveling sine
+          // Idle: gentle traveling sine — the paper "breathing" before audio.
           const t = performance.now() / 1000;
           amp = 0.18 + 0.18 * Math.sin(t * 1.5 + i * 0.45);
         }
@@ -189,12 +209,11 @@ export default function SoundLab() {
         const x = i * (barW + gap);
         const y = H - h;
 
-        // Hue ramp: low → 단청 amber, high → 청자 sage.
+        // 농묵(濃墨) → 담묵(淡墨): low frequencies render at full ink
+        // weight, high frequencies dilute. Same colour, varying opacity.
         const t = i / (BAR_COUNT - 1);
-        const r = Math.round(217 - (217 - 132) * t);
-        const g = Math.round(119 + (169 - 119) * t);
-        const b = Math.round(  6 + (140 -   6) * t);
-        ctx2d.fillStyle = `rgb(${r}, ${g}, ${b})`;
+        const inkDensity = 1.0 - t * 0.55;       // 1.0 → ~0.45
+        ctx2d.fillStyle = `rgba(${r}, ${g}, ${b}, ${inkDensity})`;
         roundRect(ctx2d, x, y, barW, h, 3 * dpr);
         ctx2d.fill();
       }
@@ -205,6 +224,7 @@ export default function SoundLab() {
 
     return () => {
       window.removeEventListener("resize", resize);
+      themeObserver.disconnect();
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, []);
@@ -220,7 +240,7 @@ export default function SoundLab() {
   return (
     <section id="lab" className="py-24 md:py-32 border-b border-paper-deep">
       <div className="mx-auto max-w-5xl px-6">
-        <p className="text-xs tracking-[0.3em] text-amber-deep uppercase">Sound Lab</p>
+        <p className="text-xs tracking-[0.3em] text-ink-soft uppercase">Sound Lab</p>
         <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight">
           음원별로, 사용하는 음역대가 다릅니다
         </h2>
@@ -229,6 +249,10 @@ export default function SoundLab() {
         </p>
 
         <div className="mt-10 rounded-2xl border border-paper-deep bg-paper-soft p-4 md:p-6">
+          {/* Stage uses bg-ink so the figure-ground inverts cleanly with mode:
+              dark stage + light bars in light mode, light stage + dark bars
+              in dark mode. Bars themselves are drawn in JS using the page's
+              paper color, which inverts via the same token swap. */}
           <canvas
             ref={canvasRef}
             className="block w-full h-40 md:h-56 rounded-lg bg-ink"
@@ -245,8 +269,8 @@ export default function SoundLab() {
                   className={
                     "rounded-lg border p-4 text-left transition-colors " +
                     (on
-                      ? "border-amber bg-amber text-paper"
-                      : "border-paper-deep bg-paper hover:border-amber text-ink")
+                      ? "border-ink bg-ink text-paper"
+                      : "border-paper-deep bg-paper hover:border-ink text-ink")
                   }
                 >
                   <p className="text-sm font-semibold">{p.label}</p>
@@ -266,7 +290,7 @@ export default function SoundLab() {
                 min={0} max={1} step={0.01}
                 value={volume}
                 onChange={(e) => setVolume(Number(e.target.value))}
-                className="flex-1 accent-amber"
+                className="flex-1 accent-ink"
                 aria-label="Volume"
               />
               <span className="tabular text-xs w-10 text-right">{Math.round(volume * 100)}%</span>
@@ -281,7 +305,7 @@ export default function SoundLab() {
           </div>
 
           <p className="mt-4 text-xs text-ink-mute">
-            ⚠ 이어폰 사용 시 볼륨을 30% 이하로 시작하세요. 출력은 안전을 위해 50%로 제한됩니다. 실제 스피커의 응답은 개별 측정값에 따릅니다.
+            이어폰 사용 시 볼륨을 30% 이하로 시작하세요. 출력은 안전을 위해 50%로 제한됩니다. 실제 스피커의 응답은 개별 측정값에 따릅니다.
           </p>
         </div>
       </div>
@@ -328,4 +352,37 @@ function roundRect(
   ctx.arcTo(x,     y + h, x,     y,     rr);
   ctx.arcTo(x,     y,     x + w, y,     rr);
   ctx.closePath();
+}
+
+// Parse a CSS colour string into RGB triplet. Handles hex (#RGB / #RRGGBB)
+// and rgb()/rgba(). Returns null if the format is unknown — caller falls
+// back to a sane default.
+function parseColour(css: string): [number, number, number] | null {
+  if (!css) return null;
+  const s = css.trim();
+  // #rgb or #rrggbb
+  const hex = s.match(/^#([0-9a-f]{3,8})$/i);
+  if (hex) {
+    const v = hex[1];
+    if (v.length === 3) {
+      return [
+        parseInt(v[0] + v[0], 16),
+        parseInt(v[1] + v[1], 16),
+        parseInt(v[2] + v[2], 16),
+      ];
+    }
+    if (v.length === 6 || v.length === 8) {
+      return [
+        parseInt(v.slice(0, 2), 16),
+        parseInt(v.slice(2, 4), 16),
+        parseInt(v.slice(4, 6), 16),
+      ];
+    }
+  }
+  // rgb(a) form
+  const rgb = s.match(/rgba?\(\s*(\d+)\s*[,\s]+(\d+)\s*[,\s]+(\d+)/i);
+  if (rgb) {
+    return [parseInt(rgb[1], 10), parseInt(rgb[2], 10), parseInt(rgb[3], 10)];
+  }
+  return null;
 }

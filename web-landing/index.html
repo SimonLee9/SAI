@@ -22,6 +22,20 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css"
     />
+
+    <!-- No-flash mode init: runs before React mounts so :root.dark is set
+         on first paint, no light-then-dark flicker on dark-pref devices. -->
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem("sai.theme");
+          var prefersDark = window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches;
+          var dark = saved === "dark" || (saved == null && prefersDark);
+          if (dark) document.documentElement.classList.add("dark");
+        } catch (_) { /* private mode etc. — ignore */ }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

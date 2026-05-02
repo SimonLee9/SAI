@@ -18,10 +18,10 @@ export default function Footer() {
         <nav className="text-sm">
           <p className="text-xs tracking-widest text-paper/50">EXPLORE</p>
           <ul className="mt-3 space-y-2">
-            <li><a href="#features"  className="hover:text-amber-soft transition-colors">Features</a></li>
-            <li><a href="#showcase"  className="hover:text-amber-soft transition-colors">Product</a></li>
-            <li><a href="#lab"       className="hover:text-amber-soft transition-colors">Sound Lab</a></li>
-            <li><a href="#faq"       className="hover:text-amber-soft transition-colors">FAQ</a></li>
+            <li><a href="#features"  className="hover:text-paper transition-colors">Features</a></li>
+            <li><a href="#showcase"  className="hover:text-paper transition-colors">Product</a></li>
+            <li><a href="#lab"       className="hover:text-paper transition-colors">Sound Lab</a></li>
+            <li><a href="#faq"       className="hover:text-paper transition-colors">FAQ</a></li>
           </ul>
         </nav>
 
@@ -33,13 +33,13 @@ export default function Footer() {
                 href="https://github.com/SimonLee9/SAI"
                 target="_blank"
                 rel="noreferrer"
-                className="hover:text-amber-soft transition-colors"
+                className="hover:text-paper transition-colors"
               >
                 GitHub
               </a>
             </li>
             <li>
-              <a href="#waitlist" className="hover:text-amber-soft transition-colors">
+              <a href="#waitlist" className="hover:text-paper transition-colors">
                 사전 알림 신청
               </a>
             </li>

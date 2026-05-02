@@ -6,20 +6,22 @@ export default function Hero() {
       id="top"
       className="relative overflow-hidden border-b border-paper-deep"
     >
-      {/* Soft radial backdrop */}
+      {/* Soft 먹 wash backdrop — uses the page's mark color so it inverts
+          cleanly: a faint ink halo on cream in light, a faint paper halo
+          on dark in dark mode. */}
       <div
         aria-hidden
-        className="absolute inset-0 -z-10"
+        className="absolute inset-0 -z-10 opacity-[0.06]"
         style={{
           background:
-            "radial-gradient(900px 480px at 70% 20%, rgba(217,119,6,0.10), transparent 60%)," +
-            "radial-gradient(700px 400px at 20% 80%, rgba(132,169,140,0.10), transparent 60%)",
+            "radial-gradient(900px 480px at 70% 20%, var(--color-ink), transparent 60%)," +
+            "radial-gradient(700px 400px at 20% 80%, var(--color-ink), transparent 60%)",
         }}
       />
 
       <div className="mx-auto max-w-6xl px-6 pt-24 pb-28 md:pt-32 md:pb-36 grid md:grid-cols-12 gap-10 items-center">
         <div className="md:col-span-7">
-          <p className="text-xs tracking-[0.3em] text-amber-deep uppercase">
+          <p className="text-xs tracking-[0.3em] text-ink-soft uppercase">
             Spatial Acoustic Intelligence
           </p>
           <h1 className="mt-4 text-4xl md:text-6xl font-extrabold leading-[1.1] tracking-tight">
@@ -32,7 +34,7 @@ export default function Hero() {
           <div className="mt-10 flex flex-col sm:flex-row gap-3">
             <a
               href="#waitlist"
-              className="inline-flex justify-center items-center rounded-md bg-ink text-paper px-6 py-3 text-sm font-medium hover:bg-amber-deep transition-colors"
+              className="inline-flex justify-center items-center rounded-md bg-ink text-paper px-6 py-3 text-sm font-medium hover:bg-ink-soft transition-colors"
             >
               사전 알림 받기
             </a>
@@ -51,26 +53,37 @@ export default function Hero() {
 
         {/* Hero visual: 16-bar idle ring */}
         <div className="md:col-span-5">
-          <div className="relative aspect-square rounded-2xl bg-paper-soft border border-paper-deep flex items-center justify-center">
-            <div className="absolute inset-0 rounded-2xl" style={{
-              background: "conic-gradient(from 220deg, rgba(217,119,6,0.18), rgba(132,169,140,0.18), rgba(217,119,6,0.18))",
-              filter: "blur(40px)",
-              opacity: 0.9,
-            }} />
+          <div className="relative aspect-square rounded-2xl bg-paper-soft border border-paper-deep flex items-center justify-center overflow-hidden">
+            {/* 먹 그림자 — bars 뒤로 살짝 퍼지는 잉크 wash. mode 따라 자동 inversion. */}
+            <div
+              aria-hidden
+              className="absolute inset-0 rounded-2xl opacity-[0.10]"
+              style={{
+                background: "radial-gradient(circle at 50% 70%, var(--color-ink), transparent 65%)",
+                filter: "blur(28px)",
+              }}
+            />
             <div
               className="relative grid gap-1 w-3/4 h-2/5 items-end"
               style={{ gridTemplateColumns: "repeat(16, minmax(0, 1fr))" }}
             >
-              {Array.from({ length: 16 }, (_, i) => (
-                <div
-                  key={i}
-                  className="rounded-sm bg-amber origin-bottom"
-                  style={{
-                    animation: `idle-bar ${1.6 + (i % 5) * 0.18}s ease-in-out ${i * 0.07}s infinite`,
-                    height: "100%",
-                  }}
-                />
-              ))}
+              {Array.from({ length: 16 }, (_, i) => {
+                // 농묵 → 담묵: 가운데 막대일수록 진하고, 가장자리는 옅음.
+                const center = (16 - 1) / 2;
+                const dist = Math.abs(i - center) / center; // 0..1
+                const opacity = 1 - dist * 0.55;
+                return (
+                  <div
+                    key={i}
+                    className="rounded-sm bg-ink origin-bottom"
+                    style={{
+                      opacity,
+                      animation: `idle-bar ${1.6 + (i % 5) * 0.18}s ease-in-out ${i * 0.07}s infinite`,
+                      height: "100%",
+                    }}
+                  />
+                );
+              })}
             </div>
           </div>
           <p className="mt-3 text-xs text-ink-mute text-center">WS2812B × 16 — 실제 LED 링 시각화 미리보기</p>
