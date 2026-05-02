@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel in-progress runs of the same ref to keep queue short.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # --------------------------------------------------------------------------
+  # web-landing — Vite production build (also runs tsc -b via its build script).
+  # --------------------------------------------------------------------------
+  web-landing:
+    name: web-landing build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web-landing
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web-landing/package-lock.json
+
+      - run: npm ci
+      - run: npm run build
+
+      # Upload the built artifact so PRs can be inspected without re-building.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-landing-dist
+          path: web-landing/dist
+          retention-days: 7
+
+  # --------------------------------------------------------------------------
+  # services/waitlist — Cloudflare Worker typecheck (no deploy in CI).
+  # --------------------------------------------------------------------------
+  waitlist:
+    name: waitlist typecheck
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/waitlist
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: services/waitlist/package-lock.json
+
+      - run: npm ci
+      - run: npx tsc --noEmit
+
+  # --------------------------------------------------------------------------
+  # firmware — PlatformIO build for master + satellite.
+  # Marked advisory (continue-on-error) until the first real device boot
+  # validates the toolchain + library API choices on hardware. Once we have
+  # one successful flash, drop continue-on-error to make this required.
+  # --------------------------------------------------------------------------
+  firmware:
+    name: firmware build (${{ matrix.env }})
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [master, satellite]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Cache PlatformIO toolchain
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio/.cache
+            ~/.platformio/packages
+            ~/.platformio/platforms
+          key: pio-${{ runner.os }}-${{ hashFiles('firmware/**/platformio.ini') }}
+          restore-keys: |
+            pio-${{ runner.os }}-
+
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+
+      - name: Build firmware
+        working-directory: firmware/${{ matrix.env }}
+        run: pio run

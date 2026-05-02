@@ -46,6 +46,13 @@ S.A.I (Spatial Acoustic Intelligence, "사이") — 3D 프린팅 기반 모듈�
 - **services/waitlist** → Cloudflare Workers + KV namespace `WAITLIST_KV`. CORS는 `wrangler.toml`의 `ALLOWED_ORIGIN`으로 landing origin에 락. 첫 배포 절차는 [services/waitlist/README.md](services/waitlist/README.md).
 - 두 surface 사이 결합은 `web-landing/.env`의 `VITE_WAITLIST_ENDPOINT`만으로 — endpoint 미설정 시 `Waitlist.tsx`는 자동으로 localStorage 폴백.
 
+## CI
+
+`.github/workflows/ci.yml`은 push/PR(main 브랜치)마다 세 잡을 병렬 실행:
+1. **web-landing build** — `npm ci` + `npm run build` (tsc -b 포함). dist artifact 업로드.
+2. **waitlist typecheck** — `npm ci` + `npx tsc --noEmit`.
+3. **firmware build** — PlatformIO 캐시 + master/satellite 매트릭스. **첫 device bring-up 전까지는 advisory** (`continue-on-error: true`). 실 보드 한 번 빌드/플래시 성공 후 required로 승격.
+
 ## Working with Claude Code on this repo
 
 - 사용 가능한 스킬: `init`(CLAUDE.md 갱신), `review`(PR 리뷰), `security-review`, `simplify`(변경 사항 코드 품질 점검), `claude-api`(SDK 코드 작성). `/skill-name` 형식으로 호출.
