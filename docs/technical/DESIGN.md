@@ -56,8 +56,9 @@ S.A.I는 ESP32-S3를 두뇌로 하는 블루투스 스피커이다. Phase 1은 �
 
 ### 3.1 Build framework
 
-- **Arduino-ESP32** (PlatformIO `framework = arduino`) 확정. 라이브러리 생태계(ESP32-A2DP, FastLED)와 프로토타이핑 속도를 우선시한다.
-- 향후 I2S DMA 정밀 제어가 필요해지면 ESP-IDF 컴포넌트를 부분 도입 검토 (마스터 노드의 `audio/` 모듈 한정).
+- **Arduino-ESP32 v2** (`framework = arduino`, `platform = espressif32` 공식 레지스트리) 확정. 라이브러리 생태계(ESP32-A2DP, FastLED)와 프로토타이핑 속도를 우선시한다.
+- ESP-IDF는 **4.x 기반**이며, sai_audio는 그에 맞춰 legacy `driver/i2s.h` API 사용 (`i2s_driver_install` / `i2s_set_pin` / `i2s_write`).
+- **ESP-IDF 5+ 전환 보류 사유**: ESP32-A2DP 라이브러리가 Arduino-ESP32 v3을 거부 (`BluetoothA2DPCommon.h`에서 `#error`). sai_audio가 새 `driver/i2s_std.h`를 쓰려면 v3 + IDF 5가 필요한데, 그러면 BT 스택이 무너진다. ESP32-A2DP가 v3을 지원하는 시점에 sai_audio + sai_bt를 함께 마이그레이션 (pioarduino 포크 사용).
 - 빌드 시스템: PlatformIO. 환경: `master`, `satellite` (각각 자체 `platformio.ini`).
 
 ### 3.2 모듈 구성 (`firmware/shared/lib/`)
