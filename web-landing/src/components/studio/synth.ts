@@ -216,11 +216,14 @@ export function playPad(
 
   for (const f of freqs) {
     const a = ctx.createOscillator();
-    a.type = "sawtooth"; a.frequency.value = f;
+    a.type = "sawtooth";
+    a.frequency.value = f;
     const b = ctx.createOscillator();
-    b.type = "triangle"; b.frequency.value = f * 1.005; // slight detune
+    b.type = "triangle";
+    b.frequency.value = f * 1.005;       // slight detune
     a.connect(filter);
     b.connect(filter);
+    // Stop 100 ms past the envelope tail to avoid clicks (matches playKick/playBass).
     a.start(time); a.stop(time + 1.6);
     b.start(time); b.stop(time + 1.6);
   }
