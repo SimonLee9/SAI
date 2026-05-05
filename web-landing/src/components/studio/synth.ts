@@ -228,3 +228,86 @@ export function playPad(
     b.start(time); b.stop(time + 1.6);
   }
 }
+
+// ---------------------------------------------------------------------------
+// Perc — 4 small auxiliary percussion voices. Designed to sit ABOVE the
+// drum kit without competing — short, bright, low headroom each.
+// ---------------------------------------------------------------------------
+export type PercKind = "shaker" | "rim" | "tom" | "cowbell";
+
+export function playPerc(
+  kind: PercKind, ctx: AudioContext, time: number, dest: AudioNode,
+) {
+  PERC_FNS[kind](ctx, time, dest);
+}
+
+function playShaker(ctx: AudioContext, time: number, dest: AudioNode) {
+  const noise = ctx.createBufferSource();
+  const buf = ctx.createBuffer(1, ctx.sampleRate * 0.08, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; ++i) data[i] = (Math.random() * 2 - 1) * 0.5;
+  noise.buffer = buf;
+  const filter = ctx.createBiquadFilter();
+  filter.type = "highpass";
+  filter.frequency.value = 6000;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0, time);
+  gain.gain.linearRampToValueAtTime(0.18, time + 0.005);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
+  noise.connect(filter).connect(gain).connect(dest);
+  noise.start(time); noise.stop(time + 0.1);
+}
+
+function playRim(ctx: AudioContext, time: number, dest: AudioNode) {
+  const o = ctx.createOscillator();
+  o.type = "square";
+  o.frequency.value = 800;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0, time);
+  gain.gain.linearRampToValueAtTime(0.18, time + 0.002);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
+  o.connect(gain).connect(dest);
+  o.start(time); o.stop(time + 0.06);
+}
+
+function playTom(ctx: AudioContext, time: number, dest: AudioNode) {
+  const o = ctx.createOscillator();
+  o.type = "sine";
+  o.frequency.setValueAtTime(180, time);
+  o.frequency.exponentialRampToValueAtTime(80, time + 0.12);
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0, time);
+  gain.gain.linearRampToValueAtTime(0.32, time + 0.005);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + 0.18);
+  o.connect(gain).connect(dest);
+  o.start(time); o.stop(time + 0.2);
+}
+
+function playCowbell(ctx: AudioContext, time: number, dest: AudioNode) {
+  // Two square waves at 540/800 Hz — classic 808 cowbell ratio.
+  const mk = (freq: number) => {
+    const o = ctx.createOscillator();
+    o.type = "square";
+    o.frequency.value = freq;
+    return o;
+  };
+  const a = mk(540);
+  const b = mk(800);
+  const filter = ctx.createBiquadFilter();
+  filter.type = "bandpass";
+  filter.frequency.value = 700;
+  filter.Q.value = 6;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0, time);
+  gain.gain.linearRampToValueAtTime(0.16, time + 0.002);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + 0.18);
+  a.connect(filter);
+  b.connect(filter);
+  filter.connect(gain).connect(dest);
+  a.start(time); a.stop(time + 0.2);
+  b.start(time); b.stop(time + 0.2);
+}
+
+const PERC_FNS: Record<PercKind, (ctx: AudioContext, time: number, dest: AudioNode) => void> = {
+  shaker: playShaker, rim: playRim, tom: playTom, cowbell: playCowbell,
+};
