@@ -212,6 +212,14 @@ export class MockAudioContext {
     });
   }
 
+  createConvolver(): MockAudioNode & { buffer: AudioBuffer | null; normalize: boolean } {
+    return makeBaseNode<MockAudioNode & { buffer: AudioBuffer | null; normalize: boolean }>(
+      this,
+      "convolver",
+      { buffer: null, normalize: true },
+    );
+  }
+
   createBuffer(_channels: number, length: number, _sampleRate: number) {
     return {
       length,
