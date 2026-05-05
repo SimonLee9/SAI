@@ -117,7 +117,7 @@ function RowFragment({
         <button
           key={step}
           type="button"
-          aria-label={`lane ${lane + 1} step${step < 9 ? " " : " "}${step + 1}`}
+          aria-label={`lane ${lane + 1} step ${step + 1}`}
           aria-pressed={on}
           onClick={() => onToggle(lane, step)}
           className={

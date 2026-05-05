@@ -22,7 +22,7 @@ describe("ClipEditor — drums", () => {
 
   it("clicking a cell toggles its aria-pressed", () => {
     render(<ClipEditor clip={drumClip} onSave={() => {}} onCancel={() => {}} />);
-    const cell = screen.getByRole("button", { name: /lane 1.*step 1/i });
+    const cell = screen.getByRole("button", { name: /^lane 1 step 1$/i });
     expect(cell).toHaveAttribute("aria-pressed", "true");
     fireEvent.click(cell);
     expect(cell).toHaveAttribute("aria-pressed", "false");
@@ -31,7 +31,7 @@ describe("ClipEditor — drums", () => {
   it("Save calls onSave with the edited clip", () => {
     const onSave = vi.fn();
     render(<ClipEditor clip={drumClip} onSave={onSave} onCancel={() => {}} />);
-    fireEvent.click(screen.getByRole("button", { name: /lane 1.*step 2/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^lane 1 step 2$/i }));
     fireEvent.click(screen.getByRole("button", { name: /저장/ }));
     expect(onSave).toHaveBeenCalled();
     const next = onSave.mock.calls[0][0] as DrumClip;
