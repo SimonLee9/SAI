@@ -190,3 +190,38 @@ export function playMelody(
   o.start(time);
   o.stop(time + 0.32);
 }
+
+// ---------------------------------------------------------------------------
+// Pad — chord stab with long exponential release. Each freq gets its own
+// sawtooth+triangle pair through a shared lowpass for a warm cluster.
+// All voices in `freqs` start at `time` and ring for ~1.5 s.
+// ---------------------------------------------------------------------------
+export function playPad(
+  ctx: AudioContext, time: number, freqs: number[], dest: AudioNode,
+) {
+  if (freqs.length === 0) return;
+  const filter = ctx.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.value = 1800;
+  filter.Q.value = 0.7;
+
+  const gain = ctx.createGain();
+  // Voice-count-normalised so 3-note chords aren't 3× louder than 1-note.
+  const peak = 0.16 / Math.sqrt(freqs.length);
+  gain.gain.setValueAtTime(0, time);
+  gain.gain.linearRampToValueAtTime(peak, time + 0.04);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + 1.5);
+
+  filter.connect(gain).connect(dest);
+
+  for (const f of freqs) {
+    const a = ctx.createOscillator();
+    a.type = "sawtooth"; a.frequency.value = f;
+    const b = ctx.createOscillator();
+    b.type = "triangle"; b.frequency.value = f * 1.005; // slight detune
+    a.connect(filter);
+    b.connect(filter);
+    a.start(time); a.stop(time + 1.6);
+    b.start(time); b.stop(time + 1.6);
+  }
+}
