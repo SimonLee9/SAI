@@ -38,8 +38,8 @@ export class ClipScheduler {
   private readonly buses: ClipSchedulerBuses;
   private readonly onState: (s: SchedulerState) => void;
 
-  private active: Record<Track, Clip | null> = { drums: null, bass: null, lead: null };
-  private pending: Record<Track, PendingChange> = { drums: null, bass: null, lead: null };
+  private active: Record<Track, Clip | null> = { drums: null, bass: null, lead: null, pad: null, perc: null };
+  private pending: Record<Track, PendingChange> = { drums: null, bass: null, lead: null, pad: null, perc: null };
 
   private currentStep = 0;
   private nextStepTime = 0;

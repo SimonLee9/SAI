@@ -26,26 +26,28 @@ const TRACK_LABELS: Record<Track, string> = {
   drums: "Drums",
   bass:  "Bass",
   lead:  "Lead",
+  pad:   "Pad",
+  perc:  "Perc",
 };
 
 const VOL_MAX = 0.5;        // hearing-safety cap on master gain
 
 const EMPTY_STATE: SchedulerState = {
   step: -1,
-  active: { drums: null, bass: null, lead: null },
-  queued: { drums: null, bass: null, lead: null },
+  active: { drums: null, bass: null, lead: null, pad: null, perc: null },
+  queued: { drums: null, bass: null, lead: null, pad: null, perc: null },
 };
 
 export default function PadGrid() {
-  const library = useMemo<SceneLibrary>(() => buildLibrary(), []);
+  const library = useMemo<SceneLibrary>(() => buildLibrary({ scale: "pentatonic", rootPc: 0 }), []);
 
   const [bpm, setBpm]             = useState(108);
   const [masterVol, setMasterVol] = useState(0.6);
   const [muted, setMuted]         = useState<Record<Track, boolean>>({
-    drums: false, bass: false, lead: false,
+    drums: false, bass: false, lead: false, pad: false, perc: false,
   });
   const [trackVol, setTrackVol]   = useState<Record<Track, number>>({
-    drums: 0.85, bass: 0.75, lead: 0.7,
+    drums: 0.85, bass: 0.75, lead: 0.7, pad: 0.65, perc: 0.6,
   });
   const [playing, setPlaying]     = useState(false);
   const [state, setState]         = useState<SchedulerState>(EMPTY_STATE);
@@ -54,7 +56,7 @@ export default function PadGrid() {
   const ctxRef       = useRef<AudioContext | null>(null);
   const masterRef    = useRef<GainNode | null>(null);
   const busRef       = useRef<Record<Track, GainNode | null>>({
-    drums: null, bass: null, lead: null,
+    drums: null, bass: null, lead: null, pad: null, perc: null,
   });
   const schedulerRef = useRef<ClipScheduler | null>(null);
 
@@ -81,6 +83,8 @@ export default function PadGrid() {
     const drumsBus = make(trackVol.drums, muted.drums);
     const bassBus  = make(trackVol.bass,  muted.bass);
     const leadBus  = make(trackVol.lead,  muted.lead);
+    const padBus   = make(trackVol.pad,   muted.pad);
+    const percBus  = make(trackVol.perc,  muted.perc);
 
     const scheduler = new ClipScheduler(
       ctx,
@@ -91,7 +95,7 @@ export default function PadGrid() {
 
     ctxRef.current      = ctx;
     masterRef.current   = master;
-    busRef.current      = { drums: drumsBus, bass: bassBus, lead: leadBus };
+    busRef.current      = { drums: drumsBus, bass: bassBus, lead: leadBus, pad: padBus, perc: percBus };
     schedulerRef.current = scheduler;
     return scheduler;
   }, [masterVol, trackVol, muted, bpm]);
