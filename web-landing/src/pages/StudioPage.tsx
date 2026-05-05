@@ -15,10 +15,10 @@ export default function StudioPage() {
           작곡 패드
         </h2>
         <p className="mt-4 max-w-2xl text-ink-soft leading-relaxed">
-          드럼·베이스·리드 세 트랙, 트랙마다 8개의 클립. 셀을 탭하면 다음 마디 시작에서
-          그 클립이 재생됩니다 (Ableton Live Session View 방식). 같은 셀을 다시 탭하면 정지,
-          상단 Scene 헤더를 누르면 세 트랙이 함께 발사됩니다. 두 손가락으로 다른 트랙의
-          셀을 동시에 누를 수도 있어요 (멀티터치) — 즉흥에 가까운 작곡을 위해.
+          드럼·베이스·리드·패드·퍼커션 다섯 트랙 × 8개의 클립 슬롯. 셀 짧은 탭은 다음 마디
+          시작에서 발사 (Ableton Live Session View 방식), 길게 누르면 ✨ 재생성 / ✏️ 편집 /
+          ✕ 비우기. 스케일·키·스윙을 골라서 분위기를 바꾸고, XY 패드로 마스터 필터를 쓸고,
+          리본으로 리드 음정을 벤드. 만든 잼은 webm으로 녹음, 세션은 자동 저장됩니다.
         </p>
 
         <PadGrid />
