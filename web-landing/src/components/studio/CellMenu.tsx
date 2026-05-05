@@ -50,6 +50,7 @@ export default function CellMenu({
     >
       <button
         type="button"
+        role="menuitem"
         onClick={wrap(onRegen)}
         className="rounded-md bg-paper-soft hover:bg-ink hover:text-paper px-3 py-2 text-xs"
       >
@@ -57,6 +58,7 @@ export default function CellMenu({
       </button>
       <button
         type="button"
+        role="menuitem"
         onClick={wrap(onEdit)}
         className="rounded-md bg-paper-soft hover:bg-ink hover:text-paper px-3 py-2 text-xs"
       >
@@ -64,6 +66,7 @@ export default function CellMenu({
       </button>
       <button
         type="button"
+        role="menuitem"
         onClick={wrap(onClear)}
         className="rounded-md bg-paper-soft hover:bg-injoo hover:text-paper px-3 py-2 text-xs"
       >

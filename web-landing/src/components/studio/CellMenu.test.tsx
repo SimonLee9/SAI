@@ -12,9 +12,9 @@ describe("CellMenu", () => {
         onRegen={() => {}} onEdit={() => {}} onClear={() => {}} onDismiss={() => {}}
       />,
     );
-    expect(screen.getByRole("button", { name: /재생성/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /편집/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /비우기/ })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: /재생성/ })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: /편집/ })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: /비우기/ })).toBeInTheDocument();
   });
 
   it("invokes the right callback on click", () => {
@@ -25,7 +25,7 @@ describe("CellMenu", () => {
         onRegen={onRegen} onEdit={() => {}} onClear={() => {}} onDismiss={() => {}}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /재생성/ }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /재생성/ }));
     expect(onRegen).toHaveBeenCalledOnce();
   });
 

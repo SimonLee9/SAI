@@ -1,9 +1,16 @@
-import { describe, it, expect } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 
 import PadGrid from "./PadGrid";
 import { audioRegistry } from "../../test/audio-mock";
 import { SCENES, TRACKS } from "./clips";
+
+// PadGrid v2 auto-restores from the 'auto' session slot on mount and
+// auto-saves it ~500ms after each state change. Wipe localStorage between
+// tests so one test's auto-save can't leak state into the next.
+beforeEach(() => {
+  localStorage.clear();
+});
 
 // PadGrid integration tests. PadCell now triggers on pointerUp (short tap):
 // pointerDown starts the long-press timer, pointerUp fires onTrigger if the
@@ -59,7 +66,7 @@ describe("PadGrid — Launchpad-style clip launcher", () => {
     expect(screen.getByRole("button", { name: "정지" })).toBeInTheDocument();
   });
 
-  it("scene launcher button queues all three tracks", () => {
+  it("scene launcher button queues all five tracks", () => {
     render(<PadGrid />);
     const scene2 = screen.getByRole("button", { name: /Scene 2 모든 트랙 발사/ });
     fireEvent.pointerDown(scene2);
@@ -91,7 +98,7 @@ describe("PadGrid — Launchpad-style clip launcher", () => {
       screen.getByRole("button", { name: /Scene 1 모든 트랙 발사/ }),
     );
     // Then ask to stop everything.
-    fireEvent.click(screen.getByRole("button", { name: "전체 트랙 끄기" }));
+    fireEvent.click(screen.getByRole("button", { name: "전체 끄기" }));
 
     // No assertion on UI state beyond "didn't crash" — actual stop only
     // applies on the next bar inside the scheduler. The earlier
@@ -129,5 +136,38 @@ describe("PadGrid — Launchpad-style clip launcher", () => {
     // Same for Bass, Lead.
     expect(screen.getAllByRole("button", { name: /^Bass scene/ })).toHaveLength(SCENES);
     expect(screen.getAllByRole("button", { name: /^Lead scene/ })).toHaveLength(SCENES);
+  });
+});
+
+describe("PadGrid v2 — extended", () => {
+  it("renders 5 tracks × 8 cells = 40 pad cells", () => {
+    render(<PadGrid />);
+    const idle = screen.getAllByRole("button").filter((b) => b.getAttribute("data-state") === "idle");
+    expect(idle).toHaveLength(40);
+  });
+
+  it("changing scale clears active and rebuilds the library", () => {
+    render(<PadGrid />);
+    const cell = screen.getByRole("button", { name: /Drums scene 1/ });
+    fireEvent.pointerDown(cell);
+    fireEvent.pointerUp(cell);
+    expect(cell.getAttribute("data-state")).toBe("queued");
+
+    const scale = screen.getByLabelText("Scale") as HTMLSelectElement;
+    fireEvent.change(scale, { target: { value: "major" } });
+
+    const refreshed = screen.getByRole("button", { name: /Drums scene 1/ });
+    expect(refreshed.getAttribute("data-state")).toBe("idle");
+  });
+
+  it("long-press opens the cell context menu (re-roll/edit/clear)", () => {
+    vi.useFakeTimers();
+    render(<PadGrid />);
+    const cell = screen.getByRole("button", { name: /Drums scene 1/ });
+    fireEvent.pointerDown(cell);
+    act(() => { vi.advanceTimersByTime(550); });
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: /재생성/ })).toBeInTheDocument();
+    vi.useRealTimers();
   });
 });
