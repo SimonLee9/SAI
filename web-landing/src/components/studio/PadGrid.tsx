@@ -365,6 +365,7 @@ function TrackRow({
           label={clip.name}
           ariaLabel={`${label} scene ${i + 1} ${clip.name}`}
           onTrigger={() => onTrigger(i)}
+          onMenuRequest={() => {}}
         />
       ))}
     </>

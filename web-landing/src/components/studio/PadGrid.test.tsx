@@ -5,10 +5,10 @@ import PadGrid from "./PadGrid";
 import { audioRegistry } from "../../test/audio-mock";
 import { SCENES, TRACKS } from "./clips";
 
-// PadGrid integration tests. We use fireEvent.pointerDown rather than
-// userEvent.click because PadCell intentionally only listens to
-// onPointerDown — that's what enables iOS multi-touch (a click event would
-// not fire if a finger lifts off a different cell first).
+// PadGrid integration tests. PadCell now triggers on pointerUp (short tap):
+// pointerDown starts the long-press timer, pointerUp fires onTrigger if the
+// timer hasn't fired yet. Scene launcher buttons (▶ 1..8) are NOT PadCells —
+// they still trigger on pointerDown directly.
 
 function findCell(label: RegExp) {
   return screen.getByRole("button", { name: label });
@@ -39,6 +39,7 @@ describe("PadGrid — Launchpad-style clip launcher", () => {
     render(<PadGrid />);
     const cell = findCell(/Drums scene 1/);
     fireEvent.pointerDown(cell);
+    fireEvent.pointerUp(cell);
 
     expect(audioRegistry.contexts).toHaveLength(1);
     // 4 gain nodes: master + drums + bass + lead.
