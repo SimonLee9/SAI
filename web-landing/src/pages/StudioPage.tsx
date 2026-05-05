@@ -1,5 +1,5 @@
 import BrushStroke from "../components/BrushStroke";
-import Sequencer from "../components/Sequencer";
+import PadGrid from "../components/studio/PadGrid";
 
 export default function StudioPage() {
   return (
@@ -12,16 +12,16 @@ export default function StudioPage() {
           className="mt-2 block w-12 h-[6px]"
         />
         <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight">
-          드럼·베이스·멜로디, 한 박자 위에서
+          작곡 패드
         </h2>
         <p className="mt-4 max-w-2xl text-ink-soft leading-relaxed">
-          세 개의 트랙이 동기화된 16-step 시퀀서입니다. 드럼은 4가지 합성 보이스
-          (kick·snare·hat·clap), 베이스는 saw + lowpass envelope, 멜로디는
-          sine·triangle·square 중에서 고를 수 있습니다. 스케일은 5음계·Major·Minor —
-          어떤 칸을 누르든 음악으로 떨어지도록.
+          드럼·베이스·리드 세 트랙, 트랙마다 8개의 클립. 셀을 탭하면 다음 마디 시작에서
+          그 클립이 재생됩니다 (Ableton Live Session View 방식). 같은 셀을 다시 탭하면 정지,
+          상단 Scene 헤더를 누르면 세 트랙이 함께 발사됩니다. 두 손가락으로 다른 트랙의
+          셀을 동시에 누를 수도 있어요 (멀티터치) — 즉흥에 가까운 작곡을 위해.
         </p>
 
-        <Sequencer />
+        <PadGrid />
       </div>
     </section>
   );
