@@ -14,8 +14,10 @@ function makeScheduler(onState: (s: SchedulerState) => void = () => {}) {
   const ctx = new MockAudioContext() as unknown as AudioContext;
   const buses = {
     drums: ctx.createGain(),
-    bass: ctx.createGain(),
-    lead: ctx.createGain(),
+    bass:  ctx.createGain(),
+    lead:  ctx.createGain(),
+    pad:   ctx.createGain(),
+    perc:  ctx.createGain(),
   };
   const sched = new ClipScheduler(ctx, buses, onState);
   return { ctx: ctx as unknown as MockAudioContext, sched };
@@ -129,5 +131,34 @@ describe("ClipScheduler — quantized launch", () => {
     sched.__test__advance(0); // run a full bar; should wrap back to step 0
     // No assertion on internal state here; this just guards against an
     // infinite loop bug in __test__advance if currentStep never wraps.
+  });
+});
+
+describe("ClipScheduler — swing + new tracks", () => {
+  it("setSwing clamps and stores the value", () => {
+    const { sched } = makeScheduler();
+    sched.setSwing(0.4);
+    sched.setBpm(120);
+    sched.start();
+    expect(sched.__test__nextStepTime()).toBeGreaterThan(0);
+  });
+
+  it("launchClip works for pad and perc tracks", () => {
+    const lib = buildLibrary({ scale: "pentatonic", rootPc: 0 });
+    const { ctx, sched } = makeScheduler();
+    sched.start();
+    sched.launchClip("pad", lib.pad[0]);
+    sched.launchClip("perc", lib.perc[0]);
+    ctx.currentTime = 5.0;
+    sched.__test__advance(1);
+    const active = sched.__test__active();
+    expect(active.pad).toBe(lib.pad[0]);
+    expect(active.perc).toBe(lib.perc[0]);
+  });
+
+  it("setLeadBend stores cents", () => {
+    const { sched } = makeScheduler();
+    sched.setLeadBend(150);
+    expect(sched.__test__leadBend()).toBe(150);
   });
 });

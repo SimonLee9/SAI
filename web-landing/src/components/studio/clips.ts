@@ -205,11 +205,3 @@ export function buildLibrary(opts: LibraryOptions = DEFAULT_OPTS): SceneLibrary 
   }
   return lib as SceneLibrary;
 }
-
-// ---------------------------------------------------------------------------
-// Transitional compat — the v1 clipScheduler still imports BASS_ROWS/LEAD_ROWS
-// directly. Task 6 will switch the scheduler to rowsFor() and these exports
-// can then be removed.
-// ---------------------------------------------------------------------------
-export const BASS_ROWS = rowsFor({ scale: "pentatonic", rootPc: 0 }).bass;
-export const LEAD_ROWS = rowsFor({ scale: "pentatonic", rootPc: 0 }).lead;

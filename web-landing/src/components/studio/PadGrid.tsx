@@ -88,7 +88,7 @@ export default function PadGrid() {
 
     const scheduler = new ClipScheduler(
       ctx,
-      { drums: drumsBus, bass: bassBus, lead: leadBus },
+      { drums: drumsBus, bass: bassBus, lead: leadBus, pad: padBus, perc: percBus },
       (s) => setState(s),
     );
     scheduler.setBpm(bpm);
