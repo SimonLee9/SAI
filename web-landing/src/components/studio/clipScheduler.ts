@@ -165,7 +165,7 @@ export class ClipScheduler {
     if (leadClip && leadClip.kind === "lead") {
       for (let row = 0; row < leadClip.steps.length; ++row) {
         if (leadClip.steps[row][step]) {
-          playMelody(this.ctx, time, LEAD_ROWS[row].freq, this.buses.lead, "triangle");
+          void playMelody(this.ctx, time, LEAD_ROWS[row].freq, this.buses.lead, "triangle");
         }
       }
     }

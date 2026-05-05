@@ -44,6 +44,7 @@ export interface MockOscillatorNode extends MockSourceNode {
   // OscillatorNode.type in real Web Audio — set by callers.
   type: OscillatorType;
   frequency: MockAudioParam;
+  detune: MockAudioParam;
 }
 
 export interface MockBufferSourceNode extends MockSourceNode {
@@ -160,6 +161,7 @@ export class MockAudioContext {
     const node = makeBaseNode<MockOscillatorNode>(this, "oscillator", {
       type: "sine",
       frequency: makeAudioParam(440),
+      detune: makeAudioParam(0),
       started: false,
       stopped: false,
       onended: null,

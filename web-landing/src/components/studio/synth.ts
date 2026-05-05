@@ -176,10 +176,12 @@ export function playMelody(
   freq: number,
   dest: AudioNode,
   osc: MelodyOsc,
-) {
+  detuneCents: number = 0,
+): OscillatorNode {
   const o = ctx.createOscillator();
   o.type = osc;
   o.frequency.value = freq;
+  o.detune.value = detuneCents;
 
   const gain = ctx.createGain();
   gain.gain.setValueAtTime(0, time);
@@ -189,6 +191,7 @@ export function playMelody(
   o.connect(gain).connect(dest);
   o.start(time);
   o.stop(time + 0.32);
+  return o;
 }
 
 // ---------------------------------------------------------------------------
